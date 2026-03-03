@@ -840,7 +840,7 @@ body {
 
 .home-nav-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin: 28px 0;
 }
@@ -1770,84 +1770,6 @@ body {
     background: var(--text-muted);
 }
 
-/* ===== HELP PAGE ===== */
-.help-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.help-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow-card);
-}
-
-.help-card h2 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.help-card h2 .help-icon {
-    font-size: 1.3rem;
-}
-
-.help-card p {
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 10px;
-    font-size: 0.9rem;
-}
-
-.help-card p:last-child {
-    margin-bottom: 0;
-}
-
-.help-card ul {
-    color: var(--text-secondary);
-    padding-left: 20px;
-    line-height: 1.7;
-    font-size: 0.9rem;
-}
-
-.help-card ul li {
-    margin-bottom: 4px;
-}
-
-.help-card code {
-    background: var(--bg-primary);
-    padding: 1px 6px;
-    border-radius: var(--radius-xs);
-    font-family: var(--font-mono);
-    font-size: 0.85em;
-    color: var(--accent-hover);
-    border: 1px solid var(--border);
-}
-
-.help-card .help-score-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 8px 0;
-}
-
-.help-score-example {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.85rem;
-}
-
-.help-score-example.pass { background: var(--success-light); color: var(--success); }
-.help-score-example.fail { background: var(--danger-light); color: var(--danger); }
-
 /* ===== MOBILE BOTTOM NAV ===== */
 #mobile-nav {
     display: none;
@@ -1943,7 +1865,7 @@ body {
     }
 
     .home-nav-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
 
     .lessons-grid {

@@ -20,10 +20,19 @@ const App = {
         const savedTheme = localStorage.getItem('codelearn_theme') || 'dark';
         this.applyTheme(savedTheme);
 
+        // Auto-detect browser language for first-time / pre-assessment users
+        const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        const detectedLang = browserLang.startsWith('cs') || browserLang.startsWith('cz') ? 'cz' : 'en';
+
         // Check for existing profile
         if (Storage.hasProfile()) {
             const profile = Storage.getProfile();
-            I18n.init(profile.uiLang || 'en');
+            // If assessment not done yet, apply browser language detection
+            if (!profile.assessmentDone && !profile.uiLangChosen) {
+                profile.uiLang = detectedLang;
+                Storage.saveProfile(profile);
+            }
+            I18n.init(profile.uiLang || detectedLang);
             this.updateNav();
 
             if (!profile.assessmentDone) {
@@ -32,9 +41,6 @@ const App = {
                 this.route();
             }
         } else {
-            // Auto-detect browser language (default to Czech for Czech browsers)
-            const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-            const detectedLang = browserLang.startsWith('cs') || browserLang.startsWith('cz') ? 'cz' : 'en';
             I18n.init(detectedLang);
             // Pre-create profile with detected language
             const newProfile = Storage.getProfile();
@@ -82,8 +88,6 @@ const App = {
             this.showLessons();
         } else if (hash === '#badges') {
             this.showBadges();
-        } else if (hash === '#help') {
-            this.showHelp();
         } else if (hash === '#settings') {
             this.showSettings();
         } else if (hash === '#assessment') {
@@ -104,6 +108,11 @@ const App = {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         const page = document.getElementById('page-' + pageId);
         if (page) page.classList.add('active');
+        // Hide mobile nav on welcome/assessment, show on other pages
+        const mobileNav = document.getElementById('mobile-nav');
+        if (mobileNav) {
+            mobileNav.style.display = (pageId === 'welcome' || pageId === 'assessment') ? 'none' : '';
+        }
         window.scrollTo(0, 0);
     },
 
@@ -145,6 +154,7 @@ const App = {
     setUiLang(lang) {
         const profile = Storage.getProfile();
         profile.uiLang = lang;
+        profile.uiLangChosen = true;
         Storage.saveProfile(profile);
         I18n.setLanguage(lang);
         this.updateNav();
@@ -217,6 +227,16 @@ const App = {
         // Clear output
         document.getElementById('assessment-output-content').textContent = '';
 
+        // Show/hide back button
+        const backBtn = document.getElementById('assessment-back-btn');
+        if (backBtn) {
+            if (index > 0) {
+                backBtn.classList.remove('hidden');
+            } else {
+                backBtn.classList.add('hidden');
+            }
+        }
+
         // Show task, hide results
         document.getElementById('assessment-task').classList.remove('hidden');
         document.getElementById('assessment-results').classList.add('hidden');
@@ -246,6 +266,15 @@ const App = {
     async submitAssessmentTask() {
         const profile = Storage.getProfile();
         const code = CodeEditor.getCode('assessment-editor');
+        const task = Tests.getAssessmentTask(this.state.assessmentIndex, profile.progLang);
+
+        // Block empty submissions
+        const trimmedCode = code.trim();
+        const starterTrimmed = (task && task.starter || '').trim();
+        if (!trimmedCode || trimmedCode === starterTrimmed) {
+            this.showToast(I18n.t('test.emptyCode'), 'error');
+            return;
+        }
 
         // Run the code first
         const result = await CodeEditor.run(code, profile.progLang);
@@ -271,6 +300,15 @@ const App = {
         if (this.state.assessmentIndex >= Tests.getAssessmentCount()) {
             this.showAssessmentResults();
         } else {
+            this.loadAssessmentTask(this.state.assessmentIndex);
+        }
+    },
+
+    // Go back to previous assessment task
+    prevAssessmentTask() {
+        if (this.state.assessmentIndex > 0) {
+            this.state.assessmentIndex--;
+            this.state.assessmentScores.pop();
             this.loadAssessmentTask(this.state.assessmentIndex);
         }
     },
@@ -315,11 +353,20 @@ const App = {
         const profile = Storage.getProfile();
         const progress = Storage.getProgress();
 
-        profile.name = document.getElementById('profile-name').value.trim();
-        profile.description = this.sanitize(document.getElementById('profile-description').value.trim());
+        profile.name = document.getElementById('profile-name').value.trim() || profile.name;
+        profile.description = this.sanitize(document.getElementById('profile-description').value.trim()) || profile.description;
         profile.assessmentDone = true;
         profile.level = Tests.determineLevel(progress.assessmentScore || 0).level;
         profile.startLesson = progress.currentLesson || 1;
+
+        // Check if this was a second language assessment
+        if (profile.origProgLang) {
+            const secondLang = profile.progLang;
+            profile[secondLang + 'AssessmentDone'] = true;
+            profile.progLang = profile.origProgLang;
+            delete profile.origProgLang;
+            delete profile.secondLangId;
+        }
 
         Storage.saveProfile(profile);
 
@@ -886,6 +933,32 @@ const App = {
 
     toggleSecondLang(enabled) {
         const profile = Storage.getProfile();
+        if (enabled) {
+            const otherLang = profile.progLang === 'python' ? 'csharp' : 'python';
+            const progressKey = otherLang + 'AssessmentDone';
+            if (!profile[progressKey]) {
+                // Need assessment for the second language
+                const cz = (profile.uiLang || 'en') === 'cz';
+                const msg = cz
+                    ? 'Pro přidání druhého jazyka musíš absolvovat úvodní test. Chceš ho začít teď?'
+                    : 'To add a second language, you need to take the initial assessment. Start now?';
+                if (confirm(msg)) {
+                    profile.secondLang = true;
+                    profile.secondLangId = otherLang;
+                    profile.origProgLang = profile.progLang;
+                    profile.progLang = otherLang;
+                    profile.assessmentDone = false;
+                    Storage.saveProfile(profile);
+                    this.state.assessmentIndex = 0;
+                    this.state.assessmentScores = [];
+                    this.showPage('assessment');
+                    this.loadAssessmentTask(0);
+                } else {
+                    document.getElementById('settings-second-lang').checked = false;
+                }
+                return;
+            }
+        }
         profile.secondLang = enabled;
         Storage.saveProfile(profile);
     },
@@ -913,15 +986,6 @@ const App = {
             this.showPage('assessment');
             this.loadAssessmentTask(0);
         }
-    },
-
-    // ==================== HELP ====================
-
-    showHelp() {
-        this.showPage('help');
-        const uiLang = (Storage.getProfile().uiLang || 'en');
-        const el = document.getElementById('help-content');
-        el.innerHTML = I18n.t('help.content');
     },
 
     // ==================== THEME ====================

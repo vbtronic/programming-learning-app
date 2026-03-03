@@ -38,7 +38,6 @@
             <a href="#home" class="nav-link" data-i18n="nav.home">Home</a>
             <a href="#lessons" class="nav-link" data-i18n="nav.lessons">Lessons</a>
             <a href="#badges" class="nav-link" data-i18n="nav.badges">Badges</a>
-            <a href="#help" class="nav-link" data-i18n="nav.help">Help</a>
             <a href="#settings" class="nav-link" data-i18n="nav.settings">Settings</a>
         </div>
         <div class="nav-info">
@@ -137,6 +136,9 @@
                 <p id="assessment-task-description"></p>
                 <div id="assessment-editor" class="code-editor"></div>
                 <div class="editor-controls">
+                    <button class="btn btn-back hidden" id="assessment-back-btn" onclick="App.prevAssessmentTask()" data-i18n="assess.back">
+                        &#x2190; Back
+                    </button>
                     <button class="btn btn-run" onclick="App.runAssessmentCode()">
                         <span class="run-icon">&#x25B6;</span>
                         <span data-i18n="editor.run">Run</span>
@@ -206,11 +208,6 @@
                     <span class="home-nav-icon">&#x1F3C5;</span>
                     <span class="home-nav-label" data-i18n="home.nav.badges">Badge Shop</span>
                     <span class="home-nav-desc" data-i18n="home.nav.badgesDesc">Collect 50+ badges with your earned points</span>
-                </a>
-                <a href="#help" class="home-nav-card">
-                    <span class="home-nav-icon">&#x2753;</span>
-                    <span class="home-nav-label" data-i18n="home.nav.help">How It Works</span>
-                    <span class="home-nav-desc" data-i18n="home.nav.helpDesc">Learn about scoring, tests, and features</span>
                 </a>
                 <a href="#settings" class="home-nav-card">
                     <span class="home-nav-icon">&#x2699;</span>
@@ -423,16 +420,6 @@
         </div>
     </section>
 
-    <!-- Help Screen -->
-    <section id="page-help" class="page">
-        <div class="container">
-            <h1 data-i18n="help.title">How It Works</h1>
-            <div class="help-content" id="help-content">
-                <!-- Filled dynamically by App.showHelp() -->
-            </div>
-        </div>
-    </section>
-
     <!-- Mobile Bottom Navigation -->
     <nav id="mobile-nav">
         <a href="#home" class="mobile-nav-item" data-page="home">
@@ -446,10 +433,6 @@
         <a href="#badges" class="mobile-nav-item" data-page="badges">
             <span class="mobile-nav-icon">&#x1F3C5;</span>
             <span data-i18n="nav.badges">Badges</span>
-        </a>
-        <a href="#help" class="mobile-nav-item" data-page="help">
-            <span class="mobile-nav-icon">&#x2753;</span>
-            <span data-i18n="nav.help">Help</span>
         </a>
         <a href="#settings" class="mobile-nav-item" data-page="settings">
             <span class="mobile-nav-icon">&#x2699;</span>
