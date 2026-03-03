@@ -1,14 +1,21 @@
 # Programming Learning App
 
-Interactive web application for learning Python and C# programming. From complete beginner to junior developer in one month.
+> **[Live Site](https://vbtronic.github.io/programming-learning-app/)**
+
+Interactive web application for learning Python and C# programming. From complete beginner to junior developer — 50 progressive lessons with hands-on coding.
 
 ## Features
 
-- **Initial Assessment** - Determine your skill level with coding challenges from beginner to senior
-- **20 Progressive Lessons** - Text-based lessons with code examples in Python and C#
-- **Interactive Tests** - Code editor with run button, automatic scoring (0-100)
-- **Badge System** - Earn points from tests, buy 50+ badges
+- **Initial Assessment** - Determine your skill level with coding challenges
+- **50 Progressive Lessons** - Text-based lessons with code examples in Python and C#
+- **50 Interactive Tests** - Code editor with run button, automatic scoring (0-100)
+- **AI Chat Assistant** - Ask questions about each lesson (WebLLM + fallback)
+- **Input Support** - Programs using input()/Console.ReadLine() get interactive input fields
+- **Badge Shop** - Earn points from tests, collect 50+ badges
+- **Performance Dashboard** - Track your progress with charts and analysis
+- **Hackathon Mode** - Creative final project at lesson 50
 - **Bilingual** - Full Czech and English support (UI + lesson content)
+- **Dark/Light Theme** - Switch between themes
 - **Offline-first** - All progress saved in LocalStorage, no account needed
 - **Two Languages** - Learn Python or C# (or both!)
 
@@ -30,7 +37,7 @@ Then open http://localhost:3000
 
 ## Live Site
 
-Hosted on GitHub Pages: https://[username].github.io/programming-learning-app/
+**https://vbtronic.github.io/programming-learning-app/**
 
 ## License
 
