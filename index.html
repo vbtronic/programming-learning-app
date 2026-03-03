@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Programming Learning App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ace Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.js" crossorigin="anonymous"></script>
+    <!-- highlight.js for lesson code blocks -->
+    <link rel="stylesheet" id="hljs-theme" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- marked.js for markdown -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav id="main-nav">
+        <div class="nav-brand" onclick="location.hash='#home'">
+            <svg class="nav-logo-svg" viewBox="0 0 120 120" width="28" height="28">
+                <defs>
+                    <linearGradient id="logo-grad-nav" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#6366f1"/>
+                        <stop offset="50%" stop-color="#a78bfa"/>
+                        <stop offset="100%" stop-color="#ec4899"/>
+                    </linearGradient>
+                </defs>
+                <text x="60" y="85" text-anchor="middle" font-family="'Inter','Segoe UI',monospace" font-weight="800" font-size="72" fill="url(#logo-grad-nav)">&lt;/&gt;</text>
+            </svg>
+            <span data-i18n="nav.title">CodeLearn</span>
+        </div>
+        <div class="nav-links">
+            <a href="#home" class="nav-link" data-i18n="nav.home">Home</a>
+            <a href="#lessons" class="nav-link" data-i18n="nav.lessons">Lessons</a>
+            <a href="#badges" class="nav-link" data-i18n="nav.badges">Badges</a>
+            <a href="#help" class="nav-link" data-i18n="nav.help">Help</a>
+            <a href="#settings" class="nav-link" data-i18n="nav.settings">Settings</a>
+        </div>
+        <div class="nav-info">
+            <span class="nav-points" id="nav-points" title="Total points">0 pts</span>
+            <button class="theme-toggle" id="theme-toggle" onclick="App.toggleTheme()" title="Toggle light/dark mode">
+                <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <span class="nav-lang" id="nav-lang-toggle" onclick="App.toggleLang()" title="Switch language">EN</span>
+        </div>
+    </nav>
+
+    <!-- Loading Screen -->
+    <section id="page-loading" class="page active">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p data-i18n="loading.text">Loading...</p>
+        </div>
+    </section>
+
+    <!-- Welcome Screen -->
+    <section id="page-welcome" class="page">
+        <div class="container welcome-container">
+            <h1 class="welcome-title">
+                <svg class="welcome-logo-svg" viewBox="0 0 120 120" width="56" height="56">
+                    <defs>
+                        <linearGradient id="logo-grad-welcome" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6366f1"/>
+                            <stop offset="50%" stop-color="#a78bfa"/>
+                            <stop offset="100%" stop-color="#ec4899"/>
+                        </linearGradient>
+                    </defs>
+                    <text x="60" y="85" text-anchor="middle" font-family="'Inter','Segoe UI',monospace" font-weight="800" font-size="72" fill="url(#logo-grad-welcome)">&lt;/&gt;</text>
+                </svg>
+                <span data-i18n="welcome.title">Learn Programming</span>
+            </h1>
+            <p class="welcome-subtitle" data-i18n="welcome.subtitle">From complete beginner to junior developer in one month</p>
+
+            <div class="welcome-card">
+                <h2 data-i18n="welcome.chooseLang">Choose your programming language</h2>
+                <div class="lang-choice">
+                    <button class="choice-btn" onclick="App.chooseProgrammingLang('python')">
+                        <span class="choice-icon">&#x1F40D;</span>
+                        <span class="choice-label">Python</span>
+                        <span class="choice-desc" data-i18n="welcome.pythonDesc">Easy to learn, versatile, great for beginners</span>
+                    </button>
+                    <button class="choice-btn" onclick="App.chooseProgrammingLang('csharp')">
+                        <span class="choice-icon">&#x1F4A0;</span>
+                        <span class="choice-label">C#</span>
+                        <span class="choice-desc" data-i18n="welcome.csharpDesc">Powerful, used in games and enterprise apps</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="welcome-card">
+                <h2 data-i18n="welcome.chooseUiLang">Interface language</h2>
+                <div class="lang-choice">
+                    <button class="choice-btn small" onclick="App.setUiLang('cz')">
+                        <span class="choice-label">&#x1F1E8;&#x1F1FF; Čeština</span>
+                    </button>
+                    <button class="choice-btn small active" onclick="App.setUiLang('en')">
+                        <span class="choice-label">&#x1F1EC;&#x1F1E7; English</span>
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-large" id="welcome-start-btn" onclick="App.startAssessment()" data-i18n="welcome.start" disabled>
+                Start Assessment
+            </button>
+        </div>
+    </section>
+
+    <!-- Assessment Screen -->
+    <section id="page-assessment" class="page">
+        <div class="container">
+            <div class="assessment-header">
+                <h1 data-i18n="assessment.title">Initial Assessment</h1>
+                <p data-i18n="assessment.subtitle">Complete coding challenges to determine your level. You can skip if you're a complete beginner.</p>
+                <button class="btn btn-secondary" onclick="App.skipAssessment()" data-i18n="assessment.skipBtn">
+                    I don't know anything yet - start from scratch
+                </button>
+            </div>
+
+            <div class="assessment-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="assessment-progress-fill" style="width: 0%"></div>
+                </div>
+                <span class="progress-text" id="assessment-progress-text">0 / 10</span>
+            </div>
+
+            <div class="assessment-task" id="assessment-task">
+                <div class="task-header">
+                    <h2 id="assessment-task-title"></h2>
+                    <span class="task-difficulty" id="assessment-task-difficulty"></span>
+                </div>
+                <p id="assessment-task-description"></p>
+                <div id="assessment-editor" class="code-editor"></div>
+                <div class="editor-controls">
+                    <button class="btn btn-run" onclick="App.runAssessmentCode()">
+                        <span class="run-icon">&#x25B6;</span>
+                        <span data-i18n="editor.run">Run</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="App.submitAssessmentTask()" data-i18n="assessment.submit">
+                        Submit & Next
+                    </button>
+                    <button class="btn btn-skip" onclick="App.skipAssessmentTask()" data-i18n="assessment.skip">
+                        Skip
+                    </button>
+                </div>
+                <div class="output-panel" id="assessment-output">
+                    <div class="output-header" data-i18n="editor.output">Output</div>
+                    <pre class="output-content" id="assessment-output-content"></pre>
+                </div>
+            </div>
+
+            <!-- Assessment Results -->
+            <div class="assessment-results hidden" id="assessment-results">
+                <h2 data-i18n="assessment.resultsTitle">Your Results</h2>
+                <div class="result-score" id="assessment-result-score"></div>
+                <div class="result-level" id="assessment-result-level"></div>
+                <div class="result-start-lesson" id="assessment-result-start"></div>
+
+                <div class="profile-form">
+                    <h3 data-i18n="assessment.aboutYou">Tell us about yourself (optional)</h3>
+                    <input type="text" id="profile-name" class="input" data-i18n-placeholder="assessment.namePlaceholder" placeholder="Your name" maxlength="50">
+                    <textarea id="profile-description" class="input textarea" data-i18n-placeholder="assessment.descPlaceholder" placeholder="Describe your experience, goals, interests..." maxlength="500" rows="3"></textarea>
+                    <button class="btn btn-primary btn-large" onclick="App.finishAssessment()" data-i18n="assessment.startLearning">
+                        Start Learning!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Home Screen -->
+    <section id="page-home" class="page">
+        <div class="container">
+            <div class="home-hero">
+                <div class="home-logo">
+                    <svg viewBox="0 0 120 120" width="80" height="80">
+                        <defs>
+                            <linearGradient id="logo-grad-home" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="50%" stop-color="#a78bfa"/>
+                                <stop offset="100%" stop-color="#ec4899"/>
+                            </linearGradient>
+                        </defs>
+                        <text x="60" y="85" text-anchor="middle" font-family="'Inter','Segoe UI',monospace" font-weight="800" font-size="72" fill="url(#logo-grad-home)">&lt;/&gt;</text>
+                    </svg>
+                </div>
+                <h1 class="home-title">CodeLearn</h1>
+                <p class="home-subtitle" data-i18n="home.subtitle">Your interactive programming journey</p>
+                <p class="home-desc" data-i18n="home.description">Learn Python or C# from scratch through 50 interactive lessons, coding challenges, and collectible badges.</p>
+            </div>
+            <div class="home-stats" id="home-stats">
+                <!-- Filled dynamically -->
+            </div>
+            <div class="home-nav-grid">
+                <a href="#lessons" class="home-nav-card">
+                    <span class="home-nav-icon">&#x1F4DA;</span>
+                    <span class="home-nav-label" data-i18n="home.nav.lessons">Interactive Lessons</span>
+                    <span class="home-nav-desc" data-i18n="home.nav.lessonsDesc">50 progressive lessons with hands-on coding</span>
+                </a>
+                <a href="#badges" class="home-nav-card">
+                    <span class="home-nav-icon">&#x1F3C5;</span>
+                    <span class="home-nav-label" data-i18n="home.nav.badges">Badge Shop</span>
+                    <span class="home-nav-desc" data-i18n="home.nav.badgesDesc">Collect 50+ badges with your earned points</span>
+                </a>
+                <a href="#help" class="home-nav-card">
+                    <span class="home-nav-icon">&#x2753;</span>
+                    <span class="home-nav-label" data-i18n="home.nav.help">How It Works</span>
+                    <span class="home-nav-desc" data-i18n="home.nav.helpDesc">Learn about scoring, tests, and features</span>
+                </a>
+                <a href="#settings" class="home-nav-card">
+                    <span class="home-nav-icon">&#x2699;</span>
+                    <span class="home-nav-label" data-i18n="home.nav.settings">Settings & Profile</span>
+                    <span class="home-nav-desc" data-i18n="home.nav.settingsDesc">Manage language, profile, and progress</span>
+                </a>
+            </div>
+            <div class="home-actions">
+                <a href="#lessons" class="btn btn-primary btn-large" data-i18n="home.continueLearning">Continue Learning</a>
+            </div>
+            <p class="home-credits" data-i18n="home.madeBy">Made by Viktor Brunclík and Claude Code</p>
+        </div>
+    </section>
+
+    <!-- Lessons List Screen -->
+    <section id="page-lessons" class="page">
+        <div class="container">
+            <p class="lessons-greeting hidden" id="lessons-greeting"></p>
+            <div class="lessons-header">
+                <h1 data-i18n="lessons.title">Lessons</h1>
+                <p class="lessons-progress" id="lessons-progress-text"></p>
+            </div>
+            <div class="lessons-grid" id="lessons-grid">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Single Lesson Screen -->
+    <section id="page-lesson" class="page">
+        <div class="container">
+            <div class="lesson-nav">
+                <a href="#lessons" class="btn btn-back" data-i18n="lesson.backToList">&larr; Back to Lessons</a>
+                <span class="lesson-number" id="lesson-number"></span>
+            </div>
+            <article class="lesson-content" id="lesson-content">
+                <!-- Filled dynamically -->
+            </article>
+            <!-- AI Chat Panel -->
+            <div class="ai-chat-panel" id="ai-chat-panel">
+                <div class="ai-chat-header" onclick="App.toggleAIChat()">
+                    <span class="ai-chat-icon">&#x1F916;</span>
+                    <span data-i18n="ai.chatTitle">AI Assistant</span>
+                    <span class="ai-chat-status" id="ai-chat-status"></span>
+                    <span class="ai-chat-toggle" id="ai-chat-toggle">&#x25BC;</span>
+                </div>
+                <div class="ai-chat-body hidden" id="ai-chat-body">
+                    <div class="ai-chat-messages" id="ai-chat-messages">
+                        <!-- Messages appear here -->
+                    </div>
+                    <div class="ai-chat-input-row">
+                        <input type="text" class="input ai-chat-input" id="ai-chat-input"
+                            data-i18n-placeholder="ai.placeholder" placeholder="Ask about this lesson..."
+                            onkeydown="if(event.key==='Enter')App.sendAIMessage()">
+                        <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()" data-i18n="ai.send">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-footer">
+                <button class="btn btn-primary btn-large" id="lesson-go-test" data-i18n="lesson.goToTest">
+                    Take the Test
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Screen -->
+    <section id="page-test" class="page">
+        <div class="container">
+            <div class="test-header">
+                <a href="#lessons" class="btn btn-back" data-i18n="test.backToList">&larr; Back</a>
+                <h1 id="test-title"></h1>
+            </div>
+            <div class="test-description" id="test-description"></div>
+
+            <div id="test-editor" class="code-editor"></div>
+            <div class="editor-controls">
+                <button class="btn btn-run" onclick="App.runTestCode()">
+                    <span class="run-icon">&#x25B6;</span>
+                    <span data-i18n="editor.run">Run</span>
+                </button>
+                <button class="btn btn-reset" onclick="App.resetTestCode()" data-i18n="editor.reset">
+                    Reset
+                </button>
+                <button class="btn btn-primary" onclick="App.submitTest()" data-i18n="test.submit">
+                    Submit Test
+                </button>
+            </div>
+            <div class="output-panel" id="test-output">
+                <div class="output-header" data-i18n="editor.output">Output</div>
+                <pre class="output-content" id="test-output-content"></pre>
+            </div>
+
+            <!-- Test Results -->
+            <div class="test-results hidden" id="test-results">
+                <div class="test-score" id="test-score-display"></div>
+                <div class="test-feedback" id="test-feedback"></div>
+                <div class="test-actions" id="test-actions"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Badges Shop Screen -->
+    <section id="page-badges" class="page">
+        <div class="container">
+            <h1 data-i18n="badges.title">Badge Shop</h1>
+            <div class="badges-info">
+                <span class="badges-points" id="badges-points-display"></span>
+                <span class="badges-owned" id="badges-owned-count"></span>
+            </div>
+            <div class="badges-filter">
+                <button class="filter-btn active" onclick="App.filterBadges('all')" data-i18n="badges.all">All</button>
+                <button class="filter-btn" onclick="App.filterBadges('basic')" data-i18n="badges.basic">Basic</button>
+                <button class="filter-btn" onclick="App.filterBadges('intermediate')" data-i18n="badges.intermediate">Intermediate</button>
+                <button class="filter-btn" onclick="App.filterBadges('advanced')" data-i18n="badges.advanced">Advanced</button>
+                <button class="filter-btn" onclick="App.filterBadges('legendary')" data-i18n="badges.legendary">Legendary</button>
+            </div>
+            <div class="badges-grid" id="badges-grid">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Settings Screen -->
+    <section id="page-settings" class="page">
+        <div class="container">
+            <h1 data-i18n="settings.title">Settings</h1>
+
+            <!-- Profile Section -->
+            <div class="settings-section">
+                <h2 data-i18n="settings.profile">Profile</h2>
+                <div class="setting-row">
+                    <label data-i18n="settings.name">Name</label>
+                    <input type="text" id="settings-name" class="input" maxlength="50">
+                </div>
+                <div class="setting-row">
+                    <label data-i18n="settings.description">About you</label>
+                    <textarea id="settings-description" class="input textarea" maxlength="500" rows="3"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="App.saveProfile()" data-i18n="settings.saveProfile">Save Profile</button>
+            </div>
+
+            <!-- Language Settings -->
+            <div class="settings-section">
+                <h2 data-i18n="settings.languages">Languages</h2>
+                <div class="setting-row">
+                    <label data-i18n="settings.uiLanguage">Interface Language</label>
+                    <select id="settings-ui-lang" class="select" onchange="App.changeUiLang(this.value)">
+                        <option value="en">English</option>
+                        <option value="cz">Čeština</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label data-i18n="settings.progLanguage">Programming Language</label>
+                    <select id="settings-prog-lang" class="select" onchange="App.changeProgLang(this.value)">
+                        <option value="python">Python</option>
+                        <option value="csharp">C#</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label data-i18n="settings.addSecondLang">Add second language</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="settings-second-lang" onchange="App.toggleSecondLang(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="settings-section">
+                <h2 data-i18n="settings.progress">Progress & Stats</h2>
+                <div class="stats-grid" id="settings-stats">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="settings-section">
+                <h2 data-i18n="dashboard.title">Performance Dashboard</h2>
+                <div class="dashboard-chart" id="dashboard-chart">
+                    <!-- Bar chart filled dynamically -->
+                </div>
+                <div class="dashboard-analysis" id="dashboard-analysis">
+                    <!-- Strengths/weaknesses -->
+                </div>
+            </div>
+
+            <!-- My Badges Section -->
+            <div class="settings-section">
+                <h2 data-i18n="settings.myBadges">My Badges</h2>
+                <div class="badges-display" id="settings-badges">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+
+            <!-- Reset Section -->
+            <div class="settings-section settings-danger">
+                <h2 data-i18n="settings.resetLevel">Reset Level</h2>
+                <p data-i18n="settings.resetDesc">Retake the initial assessment to change your level. Your badges and points will be kept.</p>
+                <button class="btn btn-danger" onclick="App.retakeAssessment()" data-i18n="settings.retakeBtn">Retake Assessment</button>
+            </div>
+
+            <!-- Full Reset Section -->
+            <div class="settings-section settings-danger">
+                <h2 data-i18n="settings.fullReset">Full Reset</h2>
+                <p data-i18n="settings.fullResetDesc">Delete all data including progress, badges, points, and profile. This cannot be undone.</p>
+                <button class="btn btn-danger" onclick="App.fullReset()" data-i18n="settings.fullResetBtn">Delete Everything</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Help Screen -->
+    <section id="page-help" class="page">
+        <div class="container">
+            <h1 data-i18n="help.title">How It Works</h1>
+            <div class="help-content" id="help-content">
+                <!-- Filled dynamically by App.showHelp() -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav id="mobile-nav">
+        <a href="#home" class="mobile-nav-item" data-page="home">
+            <span class="mobile-nav-icon">&#x1F3E0;</span>
+            <span data-i18n="nav.home">Home</span>
+        </a>
+        <a href="#lessons" class="mobile-nav-item" data-page="lessons">
+            <span class="mobile-nav-icon">&#x1F4DA;</span>
+            <span data-i18n="nav.lessons">Lessons</span>
+        </a>
+        <a href="#badges" class="mobile-nav-item" data-page="badges">
+            <span class="mobile-nav-icon">&#x1F3C5;</span>
+            <span data-i18n="nav.badges">Badges</span>
+        </a>
+        <a href="#help" class="mobile-nav-item" data-page="help">
+            <span class="mobile-nav-icon">&#x2753;</span>
+            <span data-i18n="nav.help">Help</span>
+        </a>
+        <a href="#settings" class="mobile-nav-item" data-page="settings">
+            <span class="mobile-nav-icon">&#x2699;</span>
+            <span data-i18n="nav.settings">Settings</span>
+        </a>
+    </nav>
+
+    <!-- Scripts (order matters) -->
+    <script src="js/storage.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/badges.js"></script>
+    <script src="js/lessons.js"></script>
+    <script src="js/lessons_21_30.js"></script>
+    <script src="js/lessons_31_40.js"></script>
+    <script src="js/lessons_41_50.js"></script>
+    <script src="js/tests.js"></script>
+    <script src="js/tests_extra.js"></script>
+    <script src="js/editor.js"></script>
+    <script src="js/ai_chat.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
