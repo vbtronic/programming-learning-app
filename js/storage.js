@@ -184,6 +184,16 @@ const Storage = {
         return profile.progLang !== null;
     },
 
+    // Get hackathons
+    getHackathons() {
+        return this.load('hackathons') || { active: null, history: [], nextId: 1 };
+    },
+
+    // Save hackathons
+    saveHackathons(hackathons) {
+        return this.save('hackathons', hackathons);
+    },
+
     // Clear all data
     clearAll() {
         Object.keys(localStorage).forEach(key => {

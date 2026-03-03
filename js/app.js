@@ -88,6 +88,11 @@ const App = {
             this.showLessons();
         } else if (hash === '#badges') {
             this.showBadges();
+        } else if (hash === '#hackathons') {
+            this.showHackathons();
+        } else if (hash.startsWith('#hackathon/')) {
+            const id = parseInt(hash.split('/')[1]);
+            this.showHackathon(id);
         } else if (hash === '#settings') {
             this.showSettings();
         } else if (hash === '#assessment') {
@@ -451,9 +456,11 @@ const App = {
             const isLocked = lesson.id > progress.currentLesson && !isCompleted;
             const testScore = Storage.getTestScore(lesson.id, progLang);
 
+            const isHackathon = lesson.hackathon === true;
             let classes = 'lesson-card';
             if (isCompleted) classes += ' completed';
             if (isLocked) classes += ' locked';
+            if (isHackathon) classes += ' hackathon';
 
             const diffDots = Array.from({ length: 5 }, (_, i) =>
                 `<span class="diff-dot ${i < lesson.difficulty ? 'filled' : ''}"></span>`
@@ -467,15 +474,15 @@ const App = {
 
             const card = document.createElement('div');
             card.className = classes;
-            card.innerHTML = `
-                <div class="lesson-card-number">${I18n.t('lesson.lessonN', { n: lesson.id })}</div>
+            card.innerHTML =
+                (isHackathon ? '<span class="lesson-card-hackathon-badge">&#x1F680;</span>' : '') +
+                `<div class="lesson-card-number">${I18n.t('lesson.lessonN', { n: lesson.id })}</div>
                 <div class="lesson-card-title">${title}</div>
                 <div class="lesson-card-desc">${desc}</div>
                 <div class="lesson-card-meta">
                     <div class="lesson-card-difficulty">${diffDots}</div>
                     ${scoreHtml}
-                </div>
-            `;
+                </div>`;
 
             if (!isLocked) {
                 card.addEventListener('click', () => {
@@ -517,7 +524,8 @@ const App = {
 
         // Initialize AI chat with lesson context
         const title = lesson.title[progLang][uiLang] || lesson.title[progLang].en;
-        AIChat.init(title, '', progLang);
+        AIChat.init(title, '', progLang, null);
+        AIChat.renderPanel('lesson-ai-chat-container');
     },
 
     // Toggle AI chat panel
@@ -573,6 +581,10 @@ const App = {
         document.getElementById('test-output-content').textContent = '';
         document.getElementById('test-results').classList.add('hidden');
         document.querySelector('#page-test .editor-controls').classList.remove('hidden');
+
+        // Initialize AI chat with test context (can see user's code)
+        AIChat.init(title, '', progLang, 'test-editor');
+        AIChat.renderPanel('test-ai-chat-container');
     },
 
     // Run test code
@@ -800,6 +812,236 @@ const App = {
         }
     },
 
+    // ==================== HACKATHONS ====================
+
+    showHackathons() {
+        this.showPage('hackathons');
+        const profile = Storage.getProfile();
+        const uiLang = profile.uiLang || 'en';
+        const progLang = profile.progLang;
+        const hackathons = Storage.getHackathons();
+
+        // Active hackathon card
+        const activeEl = document.getElementById('hackathon-active-card');
+        if (hackathons.active) {
+            activeEl.classList.remove('hidden');
+            const h = hackathons.active;
+            const title = h.title[uiLang] || h.title.en;
+            activeEl.innerHTML =
+                '<div class="hackathon-card active-hackathon">' +
+                    '<span class="hackathon-icon">&#x1F525;</span>' +
+                    '<h3>' + title + '</h3>' +
+                    '<p>' + I18n.t('hackathons.continueChallenge') + '</p>' +
+                    '<button class="btn btn-primary" onclick="location.hash=\'#hackathon/' + h.id + '\'">' + I18n.t('hackathons.continue') + '</button>' +
+                '</div>';
+        } else {
+            activeEl.classList.add('hidden');
+        }
+
+        // Lesson hackathons (10, 20, 30, 40, 50)
+        const lessonGrid = document.getElementById('lesson-hackathons-grid');
+        lessonGrid.innerHTML = '';
+        [10, 20, 30, 40, 50].forEach(function(lessonId) {
+            const lesson = Lessons.getLesson(lessonId);
+            if (!lesson) return;
+            const title = Lessons.getTitle(lesson, progLang, uiLang);
+            const completed = Storage.isLessonCompleted(lessonId, progLang);
+            const score = Storage.getTestScore(lessonId, progLang);
+            const card = document.createElement('div');
+            card.className = 'hackathon-card' + (completed ? ' completed' : '');
+            card.innerHTML =
+                '<span class="hackathon-icon">&#x1F680;</span>' +
+                '<h3>' + I18n.t('lesson.lessonN', { n: lessonId }) + ': ' + title + '</h3>' +
+                (score > 0 ? '<span class="hackathon-score-badge">' + score + '/100</span>' : '');
+            card.onclick = function() { location.hash = '#lesson/' + lessonId; };
+            lessonGrid.appendChild(card);
+        });
+
+        // History
+        const historyEl = document.getElementById('hackathons-history');
+        if (hackathons.history.length === 0) {
+            historyEl.innerHTML = '<p class="no-hackathons">' + I18n.t('hackathons.noHistory') + '</p>';
+        } else {
+            historyEl.innerHTML = hackathons.history.slice().reverse().map(function(h) {
+                const title = h.title[uiLang] || h.title.en;
+                const date = new Date(h.completedAt).toLocaleDateString();
+                return '<div class="hackathon-history-item">' +
+                    '<span class="hackathon-history-title">' + title + '</span>' +
+                    '<span class="hackathon-history-score">' + h.score + '/100</span>' +
+                    '<span class="hackathon-history-date">' + date + '</span>' +
+                '</div>';
+            }).join('');
+        }
+    },
+
+    createHackathon() {
+        const profile = Storage.getProfile();
+        const hackathons = Storage.getHackathons();
+
+        if (hackathons.active) {
+            location.hash = '#hackathon/' + hackathons.active.id;
+            return;
+        }
+
+        const challenge = Hackathons.generateChallenge(profile.progLang, profile.level);
+        const newHackathon = {
+            id: hackathons.nextId,
+            type: 'generated',
+            lessonId: null,
+            title: challenge.title,
+            description: challenge.description,
+            challenge: challenge.challenge,
+            starter: challenge.starter,
+            keywords: challenge.keywords,
+            maxScore: challenge.maxScore,
+            createdAt: new Date().toISOString(),
+            completedAt: null,
+            score: null,
+            code: null,
+            output: null,
+            aiCommentary: null
+        };
+
+        hackathons.active = newHackathon;
+        hackathons.nextId++;
+        Storage.saveHackathons(hackathons);
+        location.hash = '#hackathon/' + newHackathon.id;
+    },
+
+    showHackathon(id) {
+        this.showPage('hackathon');
+        const profile = Storage.getProfile();
+        const progLang = profile.progLang;
+        const uiLang = profile.uiLang || 'en';
+        const hackathons = Storage.getHackathons();
+
+        const hackathon = (hackathons.active && hackathons.active.id == id)
+            ? hackathons.active
+            : hackathons.history.find(function(h) { return h.id == id; });
+
+        if (!hackathon) { location.hash = '#hackathons'; return; }
+
+        // Render challenge
+        const challengeEl = document.getElementById('hackathon-challenge');
+        const title = hackathon.title[uiLang] || hackathon.title.en;
+        const desc = hackathon.challenge[uiLang] || hackathon.challenge.en;
+        challengeEl.innerHTML = '<h1>' + title + '</h1><div class="hackathon-desc">' + desc + '</div>';
+
+        // Editor
+        CodeEditor.destroy('hackathon-editor');
+        CodeEditor.create('hackathon-editor', { lang: progLang, value: hackathon.code || hackathon.starter || '' });
+
+        // Clear output/results
+        document.getElementById('hackathon-output-content').textContent = '';
+        document.getElementById('hackathon-results').classList.add('hidden');
+
+        // Show/hide controls based on whether it's completed
+        const controls = document.querySelector('#page-hackathon .editor-controls');
+        if (hackathon.completedAt) {
+            controls.classList.add('hidden');
+            // Show results
+            this.showHackathonResults(hackathon, uiLang);
+        } else {
+            controls.classList.remove('hidden');
+        }
+
+        // AI Chat
+        AIChat.init(title, '', progLang, 'hackathon-editor');
+        AIChat.renderPanel('hackathon-ai-chat-container');
+    },
+
+    async runHackathonCode() {
+        const profile = Storage.getProfile();
+        const code = CodeEditor.getCode('hackathon-editor');
+        const outputEl = document.getElementById('hackathon-output-content');
+
+        let inputValues = null;
+        if (CodeEditor.needsInput(code, profile.progLang)) {
+            inputValues = await CodeEditor.collectInputs(code, profile.progLang, 'hackathon-output-content');
+        } else {
+            outputEl.innerHTML = '<span class="success">' + I18n.t('editor.running') + '</span>';
+        }
+
+        const result = await CodeEditor.run(code, profile.progLang, inputValues);
+        CodeEditor.displayOutput('hackathon-output-content', result);
+    },
+
+    async submitHackathon() {
+        const profile = Storage.getProfile();
+        const code = CodeEditor.getCode('hackathon-editor');
+        const hackathons = Storage.getHackathons();
+        const hackathon = hackathons.active;
+        if (!hackathon) return;
+
+        // Block empty submissions
+        if (!code.trim()) {
+            this.showToast(I18n.t('test.emptyCode'), 'error');
+            return;
+        }
+
+        // Hide controls
+        document.querySelector('#page-hackathon .editor-controls').classList.add('hidden');
+
+        // Run code
+        const result = await CodeEditor.run(code, profile.progLang);
+        CodeEditor.displayOutput('hackathon-output-content', result);
+
+        // Evaluate
+        const score = Hackathons.evaluate(code, result.output, hackathon, profile.progLang);
+        const uiLang = profile.uiLang || 'en';
+        const cz = uiLang === 'cz';
+
+        // Generate commentary
+        var commentary;
+        if (score >= 80) {
+            commentary = cz ? 'V\u00fdborn\u00e1 pr\u00e1ce! Tv\u016fj k\u00f3d je dob\u0159e strukturovan\u00fd a kreativn\u00ed.' : 'Excellent work! Your code is well-structured and creative.';
+        } else if (score >= 50) {
+            commentary = cz ? 'Dobr\u00fd z\u00e1klad! Zkus p\u0159idat o\u0161et\u0159en\u00ed chyb a v\u00edce funkc\u00ed.' : 'Good foundation! Try adding error handling and more functions.';
+        } else {
+            commentary = cz ? 'Dobr\u00fd za\u010d\u00e1tek! Zkus roz\u0161\u00ed\u0159it k\u00f3d o t\u0159\u00eddy, funkce a o\u0161et\u0159en\u00ed chyb.' : 'Good start! Try expanding with classes, functions, and error handling.';
+        }
+
+        // Save to history
+        hackathon.completedAt = new Date().toISOString();
+        hackathon.score = score;
+        hackathon.code = code;
+        hackathon.output = result.output;
+        hackathon.aiCommentary = commentary;
+        hackathons.history.push(hackathon);
+        hackathons.active = null;
+        Storage.saveHackathons(hackathons);
+
+        // Award points
+        Storage.addPoints(score);
+        this.updateNav();
+
+        // Show results
+        this.showHackathonResults(hackathon, uiLang);
+    },
+
+    showHackathonResults(hackathon, uiLang) {
+        const cz = uiLang === 'cz';
+        const resultsEl = document.getElementById('hackathon-results');
+        resultsEl.classList.remove('hidden');
+
+        const passed = hackathon.score >= 50;
+        document.getElementById('hackathon-score-display').innerHTML =
+            '<div class="score-circle ' + (passed ? 'pass' : 'fail') + '">' +
+                '<span class="score-number">' + hackathon.score + '</span>' +
+                '<span class="score-label">/100</span>' +
+            '</div>' +
+            '<p class="score-status">' + (passed
+                ? (cz ? 'Hackathon dokon\u010den!' : 'Hackathon completed!')
+                : (cz ? 'Zkus to znovu!' : 'Try again!')) + '</p>';
+
+        document.getElementById('hackathon-feedback').innerHTML =
+            '<p class="ai-commentary">' + (hackathon.aiCommentary || '') + '</p>' +
+            '<p class="points-earned">+' + hackathon.score + ' ' + (cz ? 'bod\u016f' : 'points') + '</p>';
+
+        document.getElementById('hackathon-actions').innerHTML =
+            '<a href="#hackathons" class="btn btn-primary">' + (cz ? 'Zp\u011bt na hackathony' : 'Back to Hackathons') + '</a>';
+    },
+
     // ==================== SETTINGS ====================
 
     showSettings() {
@@ -815,7 +1057,7 @@ const App = {
         // Language selects
         document.getElementById('settings-ui-lang').value = profile.uiLang || 'en';
         document.getElementById('settings-prog-lang').value = profile.progLang || 'python';
-        document.getElementById('settings-second-lang').checked = profile.secondLang || false;
+        document.getElementById('settings-ai-toggle').checked = !profile.aiDisabled;
 
         // Stats
         const completedCount = progress.completedLessons.length;
@@ -931,35 +1173,9 @@ const App = {
         Storage.saveProfile(profile);
     },
 
-    toggleSecondLang(enabled) {
+    toggleAI(enabled) {
         const profile = Storage.getProfile();
-        if (enabled) {
-            const otherLang = profile.progLang === 'python' ? 'csharp' : 'python';
-            const progressKey = otherLang + 'AssessmentDone';
-            if (!profile[progressKey]) {
-                // Need assessment for the second language
-                const cz = (profile.uiLang || 'en') === 'cz';
-                const msg = cz
-                    ? 'Pro přidání druhého jazyka musíš absolvovat úvodní test. Chceš ho začít teď?'
-                    : 'To add a second language, you need to take the initial assessment. Start now?';
-                if (confirm(msg)) {
-                    profile.secondLang = true;
-                    profile.secondLangId = otherLang;
-                    profile.origProgLang = profile.progLang;
-                    profile.progLang = otherLang;
-                    profile.assessmentDone = false;
-                    Storage.saveProfile(profile);
-                    this.state.assessmentIndex = 0;
-                    this.state.assessmentScores = [];
-                    this.showPage('assessment');
-                    this.loadAssessmentTask(0);
-                } else {
-                    document.getElementById('settings-second-lang').checked = false;
-                }
-                return;
-            }
-        }
-        profile.secondLang = enabled;
+        profile.aiDisabled = !enabled;
         Storage.saveProfile(profile);
     },
 

@@ -9,6 +9,7 @@ const AIChat = {
     ready: false,
     supported: false,
     lessonContext: null,
+    editorId: null,
     messages: [],
 
     // Check if WebGPU is available
@@ -17,17 +18,43 @@ const AIChat = {
         return this.supported;
     },
 
-    // Initialize with lesson context
-    init(lessonTitle, lessonContent, lang) {
-        this.lessonContext = { title: lessonTitle, content: lessonContent, lang: lang };
+    // Initialize with lesson/test/hackathon context
+    init(title, content, lang, editorId) {
+        this.lessonContext = { title: title, content: content, lang: lang };
+        this.editorId = editorId || null;
         this.messages = [];
-        this.updateStatus('');
-        const body = document.getElementById('ai-chat-body');
-        if (body) body.classList.add('hidden');
-        const toggle = document.getElementById('ai-chat-toggle');
-        if (toggle) toggle.innerHTML = '&#x25BC;';
-        const messagesEl = document.getElementById('ai-chat-messages');
-        if (messagesEl) messagesEl.innerHTML = '';
+    },
+
+    // Render AI chat panel into any container
+    renderPanel(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Check if AI is disabled
+        const profile = Storage.getProfile();
+        if (profile.aiDisabled) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML =
+            '<div class="ai-chat-panel" id="ai-chat-panel">' +
+                '<div class="ai-chat-header" onclick="App.toggleAIChat()">' +
+                    '<span class="ai-chat-icon">&#x1F916;</span>' +
+                    '<span data-i18n="ai.chatTitle">' + I18n.t('ai.chatTitle') + '</span>' +
+                    '<span class="ai-chat-status" id="ai-chat-status"></span>' +
+                    '<span class="ai-chat-toggle" id="ai-chat-toggle">&#x25BC;</span>' +
+                '</div>' +
+                '<div class="ai-chat-body hidden" id="ai-chat-body">' +
+                    '<div class="ai-chat-messages" id="ai-chat-messages"></div>' +
+                    '<div class="ai-chat-input-row">' +
+                        '<input type="text" class="input ai-chat-input" id="ai-chat-input" ' +
+                            'placeholder="' + I18n.t('ai.placeholder') + '" ' +
+                            'onkeydown="if(event.key===\'Enter\')App.sendAIMessage()">' +
+                        '<button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()">' + I18n.t('ai.send') + '</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
     },
 
     // Load WebLLM engine (lazy)
@@ -41,7 +68,7 @@ const AIChat = {
         }
 
         this.loading = true;
-        this.updateStatus(I18n.currentLang === 'cz' ? 'Načítání AI modelu...' : 'Loading AI model...');
+        this.updateStatus(I18n.currentLang === 'cz' ? 'Nac\u030ci\u0301ta\u0301ni\u0301 AI modelu...' : 'Loading AI model...');
 
         try {
             const webllm = await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/web-llm@0.2.73/+esm');
@@ -54,7 +81,7 @@ const AIChat = {
             });
             this.ready = true;
             this.loading = false;
-            this.updateStatus(I18n.currentLang === 'cz' ? 'AI připraveno' : 'AI ready');
+            this.updateStatus(I18n.currentLang === 'cz' ? 'AI pr\u030ci\u0301praveno' : 'AI ready');
             return true;
         } catch (e) {
             console.warn('WebLLM failed to load:', e);
@@ -113,11 +140,24 @@ const AIChat = {
         this.addMessage('ai', response);
     },
 
-    // Build system prompt with lesson context
+    // Build system prompt with context + user code
     buildSystemPrompt() {
         const ctx = this.lessonContext;
         const lang = I18n.currentLang === 'cz' ? 'Czech' : 'English';
-        return `You are a helpful programming tutor. The student is studying "${ctx.title}" in ${ctx.lang}. Answer in ${lang}. Keep responses short (2-3 sentences). Use code examples when helpful.`;
+        let prompt = 'You are a helpful programming tutor. The student is studying "' + ctx.title + '" in ' + ctx.lang + '. Answer in ' + lang + '. Keep responses short (2-3 sentences). Use code examples when helpful.';
+
+        // Include current editor code if available
+        if (this.editorId && typeof CodeEditor !== 'undefined') {
+            try {
+                const code = CodeEditor.getCode(this.editorId);
+                if (code && code.trim().length > 0) {
+                    const truncated = code.substring(0, 500);
+                    prompt += '\n\nStudent\'s current code:\n```\n' + truncated + '\n```';
+                }
+            } catch (e) { /* editor not available */ }
+        }
+
+        return prompt;
     },
 
     // Fallback: keyword-based responses
@@ -126,45 +166,87 @@ const AIChat = {
         const cz = I18n.currentLang === 'cz';
         const ctx = this.lessonContext;
 
+        // Get user code for context-aware fallback
+        let userCode = '';
+        if (this.editorId && typeof CodeEditor !== 'undefined') {
+            try { userCode = CodeEditor.getCode(this.editorId) || ''; } catch (e) {}
+        }
+
         // Greeting
-        if (/^(hi|hello|hey|ahoj|čau|zdravím)/i.test(msg)) {
+        if (/^(hi|hello|hey|ahoj|\u010dau|zdrav\u00edm)/i.test(msg)) {
             return cz
-                ? 'Ahoj! Jsem tvůj AI asistent pro tuto lekci. Zeptej se mě na cokoliv o tématu "' + ctx.title + '".'
-                : 'Hi! I\'m your AI assistant for this lesson. Ask me anything about "' + ctx.title + '".';
+                ? 'Ahoj! Jsem tv\u016fj AI asistent. Zeptej se m\u011b na cokoliv o t\u00e9matu "' + ctx.title + '".'
+                : 'Hi! I\'m your AI assistant. Ask me anything about "' + ctx.title + '".';
+        }
+
+        // Code review request
+        if (/review|zkontroluj|check.*code|pod\u00edvej.*k\u00f3d/i.test(msg) && userCode.trim()) {
+            const lines = userCode.trim().split('\n').length;
+            const hasFunctions = /def |function |class /i.test(userCode);
+            const hasComments = /#|\/\//.test(userCode);
+            if (cz) {
+                let resp = 'Tv\u016fj k\u00f3d m\u00e1 ' + lines + ' \u0159\u00e1dk\u016f. ';
+                resp += hasFunctions ? 'Pou\u017e\u00edv\u00e1\u0161 funkce/t\u0159\u00eddy - to je dob\u0159e! ' : 'Zkus rozd\u011blit k\u00f3d do funkc\u00ed. ';
+                resp += hasComments ? 'M\u00e1\u0161 koment\u00e1\u0159e.' : 'P\u0159idej koment\u00e1\u0159e pro lep\u0161\u00ed \u010ditelnost.';
+                return resp;
+            } else {
+                let resp = 'Your code has ' + lines + ' lines. ';
+                resp += hasFunctions ? 'You use functions/classes - good! ' : 'Try splitting code into functions. ';
+                resp += hasComments ? 'Has comments.' : 'Add comments for better readability.';
+                return resp;
+            }
         }
 
         // Help / explain
-        if (/help|pomoc|explain|vysvětli|jak|how/i.test(msg)) {
+        if (/help|pomoc|explain|vysv\u011btli|jak|how/i.test(msg)) {
             return cz
-                ? 'Tato lekce se zabývá tématem "' + ctx.title + '". Zkus si projít příklady kódu v lekci a experimentovat s nimi v testu. Pokud něčemu nerozumíš, zeptej se mě konkrétněji!'
-                : 'This lesson covers "' + ctx.title + '". Try going through the code examples and experimenting with them in the test. If you need help with something specific, ask me!';
+                ? 'Tato lekce se zab\u00fdv\u00e1 t\u00e9matem "' + ctx.title + '". Zkus si proj\u00edt p\u0159\u00edklady k\u00f3du a experimentovat s nimi. Pokud n\u011b\u010demu nerozum\u00ed\u0161, zeptej se konkr\u00e9tn\u011bji!'
+                : 'This lesson covers "' + ctx.title + '". Try the code examples and experiment. If you need specific help, ask me!';
         }
 
-        // Error / bug / chyba
+        // Error / bug
         if (/error|chyba|bug|nefunguje|doesn.t work|fix/i.test(msg)) {
+            if (userCode.trim()) {
+                // Code-aware error help
+                const hasIndent = /    |\t/.test(userCode);
+                const hasSyntaxIssue = /\(\s*$|{\s*$/m.test(userCode);
+                if (cz) {
+                    let resp = 'Pod\u00edv\u00e1m se na tv\u016fj k\u00f3d. ';
+                    resp += !hasIndent ? 'Zkontroluj odsazen\u00ed - to je v Pythonu kl\u00ed\u010dov\u00e9. ' : '';
+                    resp += hasSyntaxIssue ? 'Vypad\u00e1 to na neuzav\u0159enou z\u00e1vorku. ' : '';
+                    resp += 'Zkus spustit k\u00f3d a po\u0161li mi chybovou hl\u00e1\u0161ku.';
+                    return resp;
+                } else {
+                    let resp = 'Looking at your code. ';
+                    resp += !hasIndent ? 'Check indentation - crucial in Python. ' : '';
+                    resp += hasSyntaxIssue ? 'Looks like an unclosed bracket. ' : '';
+                    resp += 'Try running the code and share the error message.';
+                    return resp;
+                }
+            }
             return cz
-                ? 'Zkontroluj si: 1) Správnou syntaxi (závorky, uvozovky, odsazení), 2) Názvy proměnných (velká/malá písmena), 3) Typy dat. Zkopíruj sem chybovou hlášku a pomůžu ti.'
-                : 'Check: 1) Correct syntax (brackets, quotes, indentation), 2) Variable names (case-sensitive), 3) Data types. Share the error message and I can help more.';
+                ? 'Zkontroluj si: 1) Spr\u00e1vnou syntaxi, 2) N\u00e1zvy prom\u011bnn\u00fdch, 3) Typy dat. Zkop\u00edruj sem chybovou hl\u00e1\u0161ku.'
+                : 'Check: 1) Syntax, 2) Variable names (case-sensitive), 3) Data types. Share the error message.';
         }
 
-        // Example / příklad
-        if (/example|příklad|ukaz|show|sample/i.test(msg)) {
+        // Example
+        if (/example|p\u0159\u00edklad|ukaz|show|sample/i.test(msg)) {
             return cz
-                ? 'Podívej se na příklady kódu v lekci výše - jsou interaktivní. Můžeš je zkopírovat do testu a experimentovat s nimi.'
-                : 'Check the code examples in the lesson above - they are interactive. You can copy them to the test editor and experiment.';
+                ? 'Pod\u00edvej se na p\u0159\u00edklady k\u00f3du v lekci v\u00fd\u0161e. M\u016f\u017ee\u0161 je zkop\u00edrovat do editoru a experimentovat.'
+                : 'Check the code examples in the lesson above. You can copy them to the editor and experiment.';
         }
 
-        // Tip / rada
-        if (/tip|rada|advice|suggest|doporuč/i.test(msg)) {
+        // Tip
+        if (/tip|rada|advice|suggest|doporu\u010d/i.test(msg)) {
             const tips = cz ? [
-                'Piš kód po malých krocích a testuj po každé změně.',
-                'Čti chybové hlášky pozorně - většinou ti přesně řeknou, co je špatně.',
-                'Neboj se experimentovat - nejlepší způsob učení je praxe!',
-                'Pokud nevíš jak začít, zkus nejdřív napsat komentáře s plánem.'
+                'Pi\u0161 k\u00f3d po mal\u00fdch kroc\u00edch a testuj po ka\u017ed\u00e9 zm\u011bn\u011b.',
+                '\u010cti chybov\u00e9 hl\u00e1\u0161ky pozorn\u011b - v\u011bt\u0161inou ti p\u0159esn\u011b \u0159eknou, co je \u0161patn\u011b.',
+                'Neboj se experimentovat - nejlep\u0161\u00ed zp\u016fsob u\u010den\u00ed je praxe!',
+                'Pokud nev\u00ed\u0161 jak za\u010d\u00edt, zkus nejd\u0159\u00edv napsat koment\u00e1\u0159e s pl\u00e1nem.'
             ] : [
                 'Write code in small steps and test after each change.',
-                'Read error messages carefully - they usually tell you exactly what\'s wrong.',
-                'Don\'t be afraid to experiment - the best way to learn is by doing!',
+                'Read error messages carefully - they tell you what\'s wrong.',
+                'Don\'t be afraid to experiment - learning by doing is the best!',
                 'If you\'re stuck, try writing comments with your plan first.'
             ];
             return tips[Math.floor(Math.random() * tips.length)];
@@ -172,8 +254,8 @@ const AIChat = {
 
         // Default
         return cz
-            ? 'Dobrá otázka! Téma "' + ctx.title + '" je důležité. Projdi si lekci a zkus příklady. Pokud potřebuješ konkrétní pomoc, napiš mi podrobněji co potřebuješ.'
-            : 'Good question! The topic "' + ctx.title + '" is important. Review the lesson and try the examples. If you need specific help, tell me more about what you need.';
+            ? 'Dobr\u00e1 ot\u00e1zka! T\u00e9ma "' + ctx.title + '" je d\u016fle\u017eit\u00e9. Projdi si lekci a zkus p\u0159\u00edklady. Pokud pot\u0159ebuje\u0161 konkr\u00e9tn\u00ed pomoc, napi\u0161 mi podrobn\u011bji.'
+            : 'Good question! The topic "' + ctx.title + '" is important. Review the lesson and try the examples. Tell me more about what you need.';
     },
 
     // Add message to chat UI

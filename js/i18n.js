@@ -13,6 +13,7 @@ const I18n = {
             'nav.home': 'Home',
             'nav.lessons': 'Lessons',
             'nav.badges': 'Badges',
+            'nav.hackathons': 'Hackathons',
             'nav.settings': 'Settings',
 
             // Home
@@ -28,8 +29,22 @@ const I18n = {
             'home.nav.lessonsDesc': '50 progressive lessons with hands-on coding',
             'home.nav.badges': 'Badge Shop',
             'home.nav.badgesDesc': 'Collect 50+ badges with your earned points',
+            'home.nav.hackathons': 'Hackathons',
+            'home.nav.hackathonsDesc': 'Creative coding challenges with AI evaluation',
             'home.nav.settings': 'Settings & Profile',
             'home.nav.settingsDesc': 'Manage language, profile, and progress',
+
+            // Hackathons
+            'hackathons.title': 'Hackathons',
+            'hackathons.subtitle': 'Creative coding challenges to test your skills',
+            'hackathons.create': 'New Hackathon',
+            'hackathons.continue': 'Continue',
+            'hackathons.continueChallenge': 'You have an active hackathon',
+            'hackathons.lessonHackathons': 'Lesson Hackathons',
+            'hackathons.history': 'Completed Hackathons',
+            'hackathons.noHistory': 'No completed hackathons yet.',
+            'hackathon.backToList': '\u2190 Back to Hackathons',
+            'hackathon.submit': 'Submit Hackathon',
 
             // Loading
             'loading.text': 'Loading...',
@@ -124,7 +139,7 @@ const I18n = {
             'settings.languages': 'Languages',
             'settings.uiLanguage': 'Interface Language',
             'settings.progLanguage': 'Programming Language',
-            'settings.addSecondLang': 'Learn both languages',
+            'settings.aiAssistant': 'AI Assistant',
             'settings.progress': 'Progress & Stats',
             'dashboard.title': 'Performance Dashboard',
             'settings.myBadges': 'My Badges',
@@ -217,9 +232,24 @@ const I18n = {
             'home.nav.lessonsDesc': '50 postupných lekcí s praktickým kódováním',
             'home.nav.badges': 'Obchod s odznaky',
             'home.nav.badgesDesc': 'Sbírej 50+ odznaků za získané body',
+            'home.nav.hackathons': 'Hackathony',
+            'home.nav.hackathonsDesc': 'Kreativní výzvy s AI hodnocením',
             'home.nav.settings': 'Nastavení a profil',
             'home.nav.settingsDesc': 'Spravuj jazyk, profil a pokrok',
+            'nav.hackathons': 'Hackathony',
             'nav.settings': 'Nastavení',
+
+            // Hackathons
+            'hackathons.title': 'Hackathony',
+            'hackathons.subtitle': 'Kreativní programovací výzvy pro ověření dovedností',
+            'hackathons.create': 'Nový hackathon',
+            'hackathons.continue': 'Pokračovat',
+            'hackathons.continueChallenge': 'Máš aktivní hackathon',
+            'hackathons.lessonHackathons': 'Hackathony z lekcí',
+            'hackathons.history': 'Dokončené hackathony',
+            'hackathons.noHistory': 'Zatím žádné dokončené hackathony.',
+            'hackathon.backToList': '\u2190 Zpět na hackathony',
+            'hackathon.submit': 'Odevzdat hackathon',
 
             // Loading
             'loading.text': 'Načítání...',
@@ -314,7 +344,7 @@ const I18n = {
             'settings.languages': 'Jazyky',
             'settings.uiLanguage': 'Jazyk rozhraní',
             'settings.progLanguage': 'Programovací jazyk',
-            'settings.addSecondLang': 'Učit se oba jazyky',
+            'settings.aiAssistant': 'AI Asistent',
             'settings.progress': 'Pokrok a statistiky',
             'dashboard.title': 'Dashboard výkonu',
             'settings.myBadges': 'Moje odznaky',

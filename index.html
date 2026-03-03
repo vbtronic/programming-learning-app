@@ -38,6 +38,7 @@
             <a href="#home" class="nav-link" data-i18n="nav.home">Home</a>
             <a href="#lessons" class="nav-link" data-i18n="nav.lessons">Lessons</a>
             <a href="#badges" class="nav-link" data-i18n="nav.badges">Badges</a>
+            <a href="#hackathons" class="nav-link" data-i18n="nav.hackathons">Hackathons</a>
             <a href="#settings" class="nav-link" data-i18n="nav.settings">Settings</a>
         </div>
         <div class="nav-info">
@@ -209,6 +210,11 @@
                     <span class="home-nav-label" data-i18n="home.nav.badges">Badge Shop</span>
                     <span class="home-nav-desc" data-i18n="home.nav.badgesDesc">Collect 50+ badges with your earned points</span>
                 </a>
+                <a href="#hackathons" class="home-nav-card">
+                    <span class="home-nav-icon">&#x1F680;</span>
+                    <span class="home-nav-label" data-i18n="home.nav.hackathons">Hackathons</span>
+                    <span class="home-nav-desc" data-i18n="home.nav.hackathonsDesc">Creative coding challenges with AI evaluation</span>
+                </a>
                 <a href="#settings" class="home-nav-card">
                     <span class="home-nav-icon">&#x2699;</span>
                     <span class="home-nav-label" data-i18n="home.nav.settings">Settings & Profile</span>
@@ -246,26 +252,8 @@
             <article class="lesson-content" id="lesson-content">
                 <!-- Filled dynamically -->
             </article>
-            <!-- AI Chat Panel -->
-            <div class="ai-chat-panel" id="ai-chat-panel">
-                <div class="ai-chat-header" onclick="App.toggleAIChat()">
-                    <span class="ai-chat-icon">&#x1F916;</span>
-                    <span data-i18n="ai.chatTitle">AI Assistant</span>
-                    <span class="ai-chat-status" id="ai-chat-status"></span>
-                    <span class="ai-chat-toggle" id="ai-chat-toggle">&#x25BC;</span>
-                </div>
-                <div class="ai-chat-body hidden" id="ai-chat-body">
-                    <div class="ai-chat-messages" id="ai-chat-messages">
-                        <!-- Messages appear here -->
-                    </div>
-                    <div class="ai-chat-input-row">
-                        <input type="text" class="input ai-chat-input" id="ai-chat-input"
-                            data-i18n-placeholder="ai.placeholder" placeholder="Ask about this lesson..."
-                            onkeydown="if(event.key==='Enter')App.sendAIMessage()">
-                        <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()" data-i18n="ai.send">Send</button>
-                    </div>
-                </div>
-            </div>
+            <!-- AI Chat Panel (rendered dynamically) -->
+            <div id="lesson-ai-chat-container"></div>
 
             <div class="lesson-footer">
                 <button class="btn btn-primary btn-large" id="lesson-go-test" data-i18n="lesson.goToTest">
@@ -308,6 +296,9 @@
                 <div class="test-feedback" id="test-feedback"></div>
                 <div class="test-actions" id="test-actions"></div>
             </div>
+
+            <!-- AI Chat Panel (rendered dynamically) -->
+            <div id="test-ai-chat-container"></div>
         </div>
     </section>
 
@@ -329,6 +320,65 @@
             <div class="badges-grid" id="badges-grid">
                 <!-- Filled dynamically -->
             </div>
+        </div>
+    </section>
+
+    <!-- Hackathons List Screen -->
+    <section id="page-hackathons" class="page">
+        <div class="container">
+            <h1 data-i18n="hackathons.title">Hackathons</h1>
+            <p class="hackathons-subtitle" data-i18n="hackathons.subtitle">Creative coding challenges to test your skills</p>
+
+            <div class="hackathons-actions">
+                <button class="btn btn-primary btn-large" onclick="App.createHackathon()" data-i18n="hackathons.create">
+                    New Hackathon
+                </button>
+            </div>
+
+            <div class="hackathon-active hidden" id="hackathon-active-card"></div>
+
+            <div class="hackathons-section">
+                <h2 data-i18n="hackathons.lessonHackathons">Lesson Hackathons</h2>
+                <div class="hackathons-grid" id="lesson-hackathons-grid"></div>
+            </div>
+
+            <div class="hackathons-section">
+                <h2 data-i18n="hackathons.history">Completed Hackathons</h2>
+                <div class="hackathons-history" id="hackathons-history"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Single Hackathon Screen -->
+    <section id="page-hackathon" class="page">
+        <div class="container">
+            <div class="hackathon-nav">
+                <a href="#hackathons" class="btn btn-back" data-i18n="hackathon.backToList">&larr; Back to Hackathons</a>
+            </div>
+            <div class="hackathon-challenge" id="hackathon-challenge"></div>
+
+            <div id="hackathon-editor" class="code-editor"></div>
+            <div class="editor-controls">
+                <button class="btn btn-run" onclick="App.runHackathonCode()">
+                    <span class="run-icon">&#x25B6;</span>
+                    <span data-i18n="editor.run">Run</span>
+                </button>
+                <button class="btn btn-primary" onclick="App.submitHackathon()" data-i18n="hackathon.submit">
+                    Submit Hackathon
+                </button>
+            </div>
+            <div class="output-panel" id="hackathon-output">
+                <div class="output-header" data-i18n="editor.output">Output</div>
+                <pre class="output-content" id="hackathon-output-content"></pre>
+            </div>
+
+            <div class="hackathon-results hidden" id="hackathon-results">
+                <div class="hackathon-score" id="hackathon-score-display"></div>
+                <div class="hackathon-feedback" id="hackathon-feedback"></div>
+                <div class="hackathon-actions" id="hackathon-actions"></div>
+            </div>
+
+            <div id="hackathon-ai-chat-container"></div>
         </div>
     </section>
 
@@ -369,9 +419,9 @@
                     </select>
                 </div>
                 <div class="setting-row">
-                    <label data-i18n="settings.addSecondLang">Add second language</label>
+                    <label data-i18n="settings.aiAssistant">AI Assistant</label>
                     <label class="toggle">
-                        <input type="checkbox" id="settings-second-lang" onchange="App.toggleSecondLang(this.checked)">
+                        <input type="checkbox" id="settings-ai-toggle" onchange="App.toggleAI(this.checked)">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -434,6 +484,10 @@
             <span class="mobile-nav-icon">&#x1F3C5;</span>
             <span data-i18n="nav.badges">Badges</span>
         </a>
+        <a href="#hackathons" class="mobile-nav-item" data-page="hackathons">
+            <span class="mobile-nav-icon">&#x1F680;</span>
+            <span data-i18n="nav.hackathons">Hackathons</span>
+        </a>
         <a href="#settings" class="mobile-nav-item" data-page="settings">
             <span class="mobile-nav-icon">&#x2699;</span>
             <span data-i18n="nav.settings">Settings</span>
@@ -452,6 +506,7 @@
     <script src="js/tests_extra.js"></script>
     <script src="js/editor.js"></script>
     <script src="js/ai_chat.js"></script>
+    <script src="js/hackathons.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
