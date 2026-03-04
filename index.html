@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <title>Learn Coding</title>
-    <link rel="stylesheet" href="css/style.css?v=16">
+    <link rel="stylesheet" href="css/style.css?v=17">
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -654,7 +654,7 @@
             this.showLoading(prefix);
             this.updateStatus((typeof I18n !== 'undefined' && I18n.currentLang === 'cz') ? 'Načítání AI modelu...' : 'Loading AI model...');
             import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.81/+esm').then(function(webllm) {
-                return webllm.CreateMLCEngine('Qwen2.5-3B-Instruct-q4f16_1-MLC', {
+                return webllm.CreateMLCEngine('Qwen3-1.7B-q4f16_1-MLC', {
                     initProgressCallback: function(progress) {
                         if (progress.text) {
                             self.updateStatus(progress.text);
@@ -694,12 +694,25 @@
             var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
             var lang = cz ? 'Czech' : 'English';
             var p = '';
+            p += '/no_think\n';
             if (cz) {
-                p += 'Jsi přátelský tutor programování. Pomáháš studentovi učit se ' + ctx.lang + '. Aktuální téma: "' + ctx.title + '".\n';
-                p += 'PRAVIDLA:\n- VŽDY odpovídej ČESKY.\n- Piš krátce a jasně (2-4 věty, víc jen u kódu).\n- Kód piš v blocích ```' + ctx.lang + '```.\n- Odpovídej POUZE na otázky o programování a aktuálním tématu.\n- Pokud student pozdraví, odpověz přátelsky a zeptej se jak mu můžeš pomoct.\n';
+                p += 'Jsi přátelský tutor programování v češtině. Učíš studenta jazyk ' + ctx.lang + '. Téma: "' + ctx.title + '".\n';
+                p += 'PRAVIDLA:\n';
+                p += '1. VŽDY odpovídej ČESKY, nikdy anglicky.\n';
+                p += '2. Piš krátce (2-4 věty). U kódu piš víc.\n';
+                p += '3. Kód vkládej do bloků ```' + ctx.lang + '```.\n';
+                p += '4. Odpovídej POUZE na programování a ' + ctx.lang + '.\n';
+                p += '5. Pokud student ukáže kód, analyzuj ho a poraď.\n';
+                p += '6. NIKDY neodpovídej na témata mimo programování.\n';
             } else {
-                p += 'You are a friendly programming tutor helping a student learn ' + ctx.lang + '. Current topic: "' + ctx.title + '".\n';
-                p += 'RULES:\n- ALWAYS answer in English.\n- Be concise (2-4 sentences, more for code).\n- Write code in ```' + ctx.lang + '``` blocks.\n- Only answer questions about programming and the current topic.\n- If the student greets you, respond friendly and ask how you can help.\n';
+                p += 'You are a programming tutor. You teach ' + ctx.lang + '. Topic: "' + ctx.title + '".\n';
+                p += 'RULES:\n';
+                p += '1. ALWAYS answer in English.\n';
+                p += '2. Be concise (2-4 sentences, more for code).\n';
+                p += '3. Write code in ```' + ctx.lang + '``` blocks.\n';
+                p += '4. ONLY answer programming questions about ' + ctx.lang + '.\n';
+                p += '5. If student shows code, analyze it and give advice.\n';
+                p += '6. NEVER answer off-topic questions.\n';
             }
             // User profile
             try {
@@ -752,7 +765,13 @@
             });
             var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
             return this.engine.chat.completions.create({ messages: msgs, max_tokens: 512, temperature: 0.7 })
-                .then(function(response) { self.replaceLastMessage(response.choices[0].message.content); })
+                .then(function(response) {
+                    var text = response.choices[0].message.content || '';
+                    // Strip Qwen3 thinking tags if present
+                    text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+                    if (!text) text = cz ? '(prázdná odpověď)' : '(empty response)';
+                    self.replaceLastMessage(text);
+                })
                 .catch(function(e) {
                     console.warn('WebLLM error:', e);
                     self.replaceLastMessage(cz ? 'Chyba AI: ' + e.message : 'AI Error: ' + e.message);
@@ -832,18 +851,18 @@
     </script>
 
     <!-- Scripts (order matters) -->
-    <script src="js/storage.js?v=16"></script>
-    <script src="js/i18n.js?v=16"></script>
-    <script src="js/badges.js?v=16"></script>
-    <script src="js/lessons.js?v=16"></script>
-    <script src="js/lessons_21_30.js?v=16"></script>
-    <script src="js/lessons_31_40.js?v=16"></script>
-    <script src="js/lessons_41_50.js?v=16"></script>
-    <script src="js/tests.js?v=16"></script>
-    <script src="js/tests_extra.js?v=16"></script>
-    <script src="js/editor.js?v=16"></script>
-    <script src="js/ai_chat.js?v=16"></script>
-    <script src="js/hackathons.js?v=16"></script>
-    <script src="js/app.js?v=16"></script>
+    <script src="js/storage.js?v=17"></script>
+    <script src="js/i18n.js?v=17"></script>
+    <script src="js/badges.js?v=17"></script>
+    <script src="js/lessons.js?v=17"></script>
+    <script src="js/lessons_21_30.js?v=17"></script>
+    <script src="js/lessons_31_40.js?v=17"></script>
+    <script src="js/lessons_41_50.js?v=17"></script>
+    <script src="js/tests.js?v=17"></script>
+    <script src="js/tests_extra.js?v=17"></script>
+    <script src="js/editor.js?v=17"></script>
+    <script src="js/ai_chat.js?v=17"></script>
+    <script src="js/hackathons.js?v=17"></script>
+    <script src="js/app.js?v=17"></script>
 </body>
 </html>
