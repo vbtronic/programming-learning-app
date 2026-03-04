@@ -921,11 +921,15 @@ const App = {
         }
         html += '</div>';
 
-        // Test Scores
-        const testKeys = Object.keys(progress.testScores).filter(function(k) { return k.endsWith('_' + progLang); });
-        html += '<div class="history-section"><h2>' + I18n.t('history.tests') + ' (' + testKeys.length + ')</h2>';
+        // Test Scores (only show tests NOT already in completed lessons to avoid duplicates)
+        const completedIds = new Set(completedLessons.map(function(l) { return l.id; }));
+        const testKeys = Object.keys(progress.testScores).filter(function(k) {
+            return k.endsWith('_' + progLang) && !completedIds.has(parseInt(k));
+        });
+        const testLabel = cz ? 'Neúspěšné testy' : 'Failed Tests';
+        html += '<div class="history-section"><h2>' + testLabel + ' (' + testKeys.length + ')</h2>';
         if (testKeys.length === 0) {
-            html += '<p class="history-empty">' + I18n.t('history.noTests') + '</p>';
+            html += '<p class="history-empty">' + (cz ? 'Žádné neúspěšné testy.' : 'No failed tests.') + '</p>';
         } else {
             html += '<div class="history-list">';
             testKeys.sort(function(a, b) { return parseInt(a) - parseInt(b); }).forEach(function(k) {
@@ -933,11 +937,10 @@ const App = {
                 const score = progress.testScores[k];
                 const lesson = Lessons.getLesson(lessonId);
                 const title = lesson ? Lessons.getTitle(lesson, progLang, uiLang) : (cz ? 'Test' : 'Test');
-                const passed = score >= 50;
                 html += '<a href="#test/' + lessonId + '" class="history-item">' +
                     '<span class="history-item-icon">&#x1F4DD;</span>' +
                     '<span class="history-item-title">' + I18n.t('lesson.lessonN', { n: lessonId }) + ': ' + title + '</span>' +
-                    '<span class="history-item-score ' + (passed ? 'passed' : 'failed') + '">' + score + '/100</span>' +
+                    '<span class="history-item-score failed">' + score + '/100 — ' + (cz ? 'Zkusit znovu' : 'Retry') + '</span>' +
                 '</a>';
             });
             html += '</div>';
@@ -1327,7 +1330,7 @@ const App = {
         // Get all test scores as array of {id, score}
         const testData = [];
         for (let i = 1; i <= totalLessons; i++) {
-            const key = profile.progLang + '_' + i;
+            const key = i + '_' + profile.progLang;
             const score = progress.testScores[key];
             if (score !== undefined) {
                 testData.push({ id: i, score: score });
@@ -1426,6 +1429,7 @@ const App = {
         const profile = Storage.getProfile();
         profile.aiDisabled = !enabled;
         Storage.saveProfile(profile);
+        this.route(); // Re-render current page to show/hide AI panel
     },
 
     fullReset() {

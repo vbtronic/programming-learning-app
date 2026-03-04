@@ -29,6 +29,20 @@ input[type="number"], input[type="search"], textarea {
     cursor: default !important;
     user-select: text;
 }
+/* Prevent text selection/caret everywhere except specific elements */
+* {
+    user-select: none;
+    -webkit-user-select: none;
+}
+/* Allow text selection in editors, inputs, output, and code blocks */
+input, textarea, select,
+.ace_editor, .ace_editor *,
+.output-content, .output-content *,
+pre, pre *, code,
+.ai-chat-bubble, .ai-chat-bubble * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
 
 /* CSS Custom Properties - Dark Theme (default) */
 :root {
@@ -1545,6 +1559,15 @@ body {
     color: var(--success);
     font-weight: 700;
     font-size: 0.85rem;
+}
+.badge-locked-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0;
+}
+.badge-card.locked {
+    opacity: 0.6;
 }
 
 /* ===== SETTINGS ===== */

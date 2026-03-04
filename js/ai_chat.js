@@ -80,7 +80,7 @@ const AIChat = {
 
         try {
             const webllm = await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/web-llm@0.2.73/+esm');
-            this.engine = await webllm.CreateMLCEngine('Llama-3.2-1B-Instruct-q4f16_1-MLC', {
+            this.engine = await webllm.CreateMLCEngine('Llama-3.2-3B-Instruct-q4f16_1-MLC', {
                 initProgressCallback: (progress) => {
                     if (progress.text) {
                         this.updateStatus(progress.text);
@@ -106,9 +106,53 @@ const AIChat = {
         if (el) el.textContent = text;
     },
 
+    // Web search via DuckDuckGo Instant Answer API (no API key, CORS-friendly)
+    async webSearch(query) {
+        try {
+            var encoded = encodeURIComponent(query);
+            var response = await fetch('https://api.duckduckgo.com/?q=' + encoded + '&format=json&no_html=1&skip_disambig=1');
+            var data = await response.json();
+            var results = '';
+            if (data.AbstractText) results += data.AbstractText + '\n';
+            if (data.Answer) results += data.Answer + '\n';
+            if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                data.RelatedTopics.slice(0, 3).forEach(function(topic) {
+                    if (topic.Text) results += '- ' + topic.Text + '\n';
+                });
+            }
+            return results.trim() || null;
+        } catch (e) {
+            console.warn('Web search failed:', e);
+            return null;
+        }
+    },
+
     // Send message to AI
     async sendMessage(userMsg) {
         if (!userMsg.trim()) return;
+
+        // Handle /search command
+        if (userMsg.trim().startsWith('/search ')) {
+            var query = userMsg.trim().substring(8).trim();
+            if (query) {
+                this.addMessage('user', userMsg);
+                var input = document.getElementById('ai-chat-input');
+                if (input) input.value = '';
+                this.addMessage('ai', '...', true);
+                var searchResults = await this.webSearch(query);
+                var cz = I18n.currentLang === 'cz';
+                if (searchResults) {
+                    var header = cz ? 'Výsledky vyhledávání pro "' + query + '":\n\n' : 'Search results for "' + query + '":\n\n';
+                    this.replaceLastMessage(header + searchResults);
+                } else {
+                    var noResults = cz ? 'Nenašel jsem přímé výsledky. ' : 'No direct results found. ';
+                    var searchUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(query);
+                    noResults += cz ? 'Zkus vyhledat na: ' + searchUrl : 'Try searching at: ' + searchUrl;
+                    this.replaceLastMessage(noResults);
+                }
+                return;
+            }
+        }
 
         // Add user message
         this.addMessage('user', userMsg);
@@ -116,11 +160,22 @@ const AIChat = {
         const input = document.getElementById('ai-chat-input');
         if (input) input.value = '';
 
+        // Auto web search for knowledge questions, enrich context for WebLLM
+        var searchContext = '';
+        if (/what is|how to|define|meaning|co je|jak se|definice|vysvětli|explain/i.test(userMsg)) {
+            try {
+                var searchResult = await this.webSearch(userMsg);
+                if (searchResult && searchResult.length > 10) {
+                    searchContext = '\n\nWeb search context: ' + searchResult.substring(0, 400);
+                }
+            } catch (e) { /* ignore */ }
+        }
+
         // Try WebLLM first
         if (this.ready && this.engine) {
             try {
                 this.addMessage('ai', '...', true);
-                const systemPrompt = this.buildSystemPrompt();
+                const systemPrompt = this.buildSystemPrompt() + searchContext;
                 const msgs = [
                     { role: 'system', content: systemPrompt },
                     ...this.messages.filter(m => m.role !== 'system').slice(-6).map(m => ({
@@ -130,7 +185,7 @@ const AIChat = {
                 ];
                 const response = await this.engine.chat.completions.create({
                     messages: msgs,
-                    max_tokens: 300,
+                    max_tokens: 512,
                     temperature: 0.7
                 });
                 const aiText = response.choices[0].message.content;
@@ -148,11 +203,30 @@ const AIChat = {
         this.addMessage('ai', response);
     },
 
-    // Build system prompt with context + user code
+    // Build system prompt with context + user code + user profile
     buildSystemPrompt() {
         const ctx = this.lessonContext;
         const lang = I18n.currentLang === 'cz' ? 'Czech' : 'English';
-        let prompt = 'You are a collaborative programming assistant. You work together with the student on "' + ctx.title + '" in ' + ctx.lang + '. Answer in ' + lang + '. Keep responses short (2-3 sentences). Always wrap code examples in triple backtick code blocks (```' + ctx.lang + ' ... ```). Help improve their code, suggest ideas, and collaborate on solutions.';
+        let prompt = 'You are a friendly programming tutor and assistant helping a student learn ' + ctx.lang + '. Current topic: "' + ctx.title + '". Answer in ' + lang + '.\n\nIMPORTANT RULES:\n- Be conversational and natural. If the student says hi, greets you, or asks how you are, respond naturally WITHOUT code.\n- Only provide code when the student explicitly asks for code, examples, help with a problem, or when it is directly relevant to their question.\n- Keep responses short (2-3 sentences for chat, more for code explanations).\n- When you do write code, wrap it in triple backtick code blocks (```' + ctx.lang + '```).\n- Adapt your language to the student\'s level.\n- You are a tutor, not a code generator. Guide, explain, encourage.';
+
+        // Include user profile and progress context
+        var profile = Storage.getProfile();
+        var progress = Storage.getProgress();
+        var userContext = '';
+        if (profile.name) userContext += 'Student name: ' + profile.name + '. ';
+        if (profile.description) userContext += 'About: ' + profile.description.substring(0, 200) + '. ';
+        if (profile.level) userContext += 'Skill level: ' + profile.level + '. ';
+        var completedCount = progress.completedLessons ? progress.completedLessons.length : 0;
+        userContext += 'Progress: lesson ' + progress.currentLesson + '/50, ' + completedCount + ' completed, ' + progress.totalPoints + ' points. ';
+        if (progress.assessmentScore) userContext += 'Assessment score: ' + progress.assessmentScore + '/100. ';
+        if (userContext) {
+            prompt += '\n\nStudent info: ' + userContext;
+            if (profile.level === 'beginner' || profile.level === 1) {
+                prompt += 'Use simple explanations suitable for a beginner. ';
+            } else if (profile.level === 'advanced' || profile.level >= 3) {
+                prompt += 'Student is advanced, you can use technical terms freely. ';
+            }
+        }
 
         // Include lesson/test content if available
         if (ctx.content && ctx.content.length > 0) {
@@ -195,12 +269,27 @@ const AIChat = {
             contextText = ctx.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 300);
         }
 
-        // Greeting
+        // Greeting - personalized with user profile
         if (/^(hi|hello|hey|ahoj|\u010dau|zdrav\u00edm)/i.test(msg)) {
             var greetCtx = contextText ? (cz ? ' Vidím, že se učíš o: ' + contextText.substring(0, 100) + '...' : ' I see you\'re learning about: ' + contextText.substring(0, 100) + '...') : '';
+            var profile = Storage.getProfile();
+            var progress = Storage.getProgress();
+            var personalName = profile.name ? (', ' + profile.name) : '';
+            var levelHint = '';
+            if (profile.level === 'beginner' || profile.level === 1) {
+                levelHint = cz ? ' Neboj se ptát na cokoliv!' : ' Don\'t hesitate to ask anything!';
+            } else if (profile.level === 'intermediate' || profile.level === 2) {
+                levelHint = cz ? ' Máš už solidní základy!' : ' You have solid foundations!';
+            } else if (profile.level === 'advanced' || profile.level >= 3) {
+                levelHint = cz ? ' Jsi pokročilý - můžeme jít do hloubky!' : ' You\'re advanced - we can go deep!';
+            }
+            var completedCount = progress.completedLessons ? progress.completedLessons.length : 0;
+            var progressHint = completedCount > 10
+                ? (cz ? ' Už máš za sebou ' + completedCount + ' lekcí!' : ' You\'ve completed ' + completedCount + ' lessons!')
+                : '';
             return cz
-                ? 'Ahoj! Jsem tvůj AI asistent pro "' + ctx.title + '".' + greetCtx + ' Jak ti můžu pomoct?'
-                : 'Hi! I\'m your AI assistant for "' + ctx.title + '".' + greetCtx + ' How can I help?';
+                ? 'Ahoj' + personalName + '! Jsem tvůj AI asistent pro "' + ctx.title + '".' + greetCtx + levelHint + progressHint + ' Jak ti můžu pomoct?'
+                : 'Hi' + personalName + '! I\'m your AI assistant for "' + ctx.title + '".' + greetCtx + levelHint + progressHint + ' How can I help?';
         }
 
         // Code review request — return improved code in code block
@@ -246,8 +335,8 @@ const AIChat = {
                     '    total = sum(numbers)\n' +
                     '    print(f"' + (cz ? 'Sou\u010det: {total}' : 'Sum: {total}') + '")\n\n' +
                     'main()\n' +
-                    '```\n' +
-                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru a upravit!' : 'You can insert it into the editor and modify it!');
+                    '```' +
+                    (this.editorId ? '\n' + (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru a upravit!' : 'You can insert it into the editor and modify it!') : '');
             } else {
                 return (cz ? 'Zde je p\u0159\u00edklad k\u00f3du:\n' : 'Here\'s a code example:\n') +
                     '```csharp\n' +
@@ -258,8 +347,8 @@ const AIChat = {
                     'int[] numbers = {1, 2, 3, 4, 5};\n' +
                     'int total = numbers.Sum();\n' +
                     'Console.WriteLine($"' + (cz ? 'Sou\u010det: {total}' : 'Sum: {total}') + '");\n' +
-                    '```\n' +
-                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru a upravit!' : 'You can insert it into the editor and modify it!');
+                    '```' +
+                    (this.editorId ? '\n' + (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru a upravit!' : 'You can insert it into the editor and modify it!') : '');
             }
         }
 
@@ -339,8 +428,8 @@ const AIChat = {
                     'data = ["a", "b", "c"]\n' +
                     'for item in data:\n' +
                     '    print(item.upper())\n' +
-                    '```\n' +
-                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru tla\u010d\u00edtkem n\u00ed\u017ee!' : 'You can insert it into the editor with the button below!');
+                    '```' +
+                    (this.editorId ? '\n' + (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru tla\u010d\u00edtkem n\u00ed\u017ee!' : 'You can insert it into the editor with the button below!') : '');
             } else {
                 return (cz ? 'Zde je p\u0159\u00edklad:\n' : 'Here\'s an example:\n') +
                     '```csharp\n' +
@@ -352,8 +441,8 @@ const AIChat = {
                     'foreach (string item in data) {\n' +
                     '    Console.WriteLine(item.ToUpper());\n' +
                     '}\n' +
-                    '```\n' +
-                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru tla\u010d\u00edtkem n\u00ed\u017ee!' : 'You can insert it into the editor with the button below!');
+                    '```' +
+                    (this.editorId ? '\n' + (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru tla\u010d\u00edtkem n\u00ed\u017ee!' : 'You can insert it into the editor with the button below!') : '');
             }
         }
 

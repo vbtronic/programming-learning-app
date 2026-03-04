@@ -214,7 +214,7 @@ const CodeEditor = {
 
             // Setup input queue
             const inputSetup = inputValues && inputValues.length > 0
-                ? `\n_input_queue = ${JSON.stringify(inputValues)}\n_input_index = 0\ndef input(prompt=""):\n    global _input_index\n    if _input_index < len(_input_queue):\n        val = _input_queue[_input_index]\n        _input_index += 1\n        print(str(prompt) + str(val))\n        return val\n    return ""\n`
+                ? `\n_input_queue = ${JSON.stringify(inputValues)}\n_input_index = 0\ndef input(prompt=""):\n    global _input_index\n    if _input_index < len(_input_queue):\n        val = _input_queue[_input_index]\n        _input_index += 1\n        return val\n    return ""\n`
                 : '';
 
             // Capture stdout
@@ -267,7 +267,7 @@ sys.stderr = sys.__stderr__
 
         // Console.WriteLine -> console.log
         js = js.replace(/Console\.WriteLine\s*\(/g, 'console.log(');
-        js = js.replace(/Console\.Write\s*\(/g, 'process.stdout.write(');
+        js = js.replace(/Console\.Write\s*\(/g, '_csWrite(');
         // Console.ReadLine() -> read from input queue
         js = js.replace(/Console\.ReadLine\s*\(\s*\)/g, '(typeof _inputQueue !== "undefined" && _inputIdx < _inputQueue.length ? _inputQueue[_inputIdx++] : "")');
 
@@ -360,11 +360,13 @@ sys.stderr = sys.__stderr__
     async runCSharp(code, inputValues) {
         try {
             let jsCode = this.transpileCSharp(code);
+            // Inject Console.Write buffer helper
+            let preamble = `let _csBuf = '';\nfunction _csWrite(s) { _csBuf += String(s); }\n`;
             // Inject input queue for Console.ReadLine
             if (inputValues && inputValues.length > 0) {
-                const queueCode = `const _inputQueue = ${JSON.stringify(inputValues)}; let _inputIdx = 0;\n`;
-                jsCode = queueCode + jsCode;
+                preamble += `const _inputQueue = ${JSON.stringify(inputValues)}; let _inputIdx = 0;\n`;
             }
+            jsCode = preamble + jsCode + `\nif (_csBuf) { console.log(_csBuf); }\n`;
             return this.runJavaScript(jsCode);
         } catch (e) {
             return { output: '', error: 'Transpilation error: ' + e.message, success: false };

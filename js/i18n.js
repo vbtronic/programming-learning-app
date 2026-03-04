@@ -133,7 +133,7 @@ const I18n = {
 
             // AI Chat
             'ai.chatTitle': 'AI Assistant',
-            'ai.placeholder': 'Cooperate with AI assistant...',
+            'ai.placeholder': 'Chat with AI... (try /search to search the web)',
             'ai.send': 'Send',
 
             // Badges
@@ -358,7 +358,7 @@ const I18n = {
 
             // AI Chat
             'ai.chatTitle': 'AI Asistent',
-            'ai.placeholder': 'Spolupracuj s AI asistentem...',
+            'ai.placeholder': 'Piš AI... (/search pro hledání na webu)',
             'ai.send': 'Odeslat',
 
             // Badges
