@@ -1320,6 +1320,51 @@ body {
     0%, 60%, 100% { opacity: 0.3; }
     30% { opacity: 1; }
 }
+
+/* AI loading screen */
+.ai-loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    gap: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
+.ai-loading-screen p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+.ai-loading-screen .ai-loading-sub {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    max-width: 250px;
+    word-break: break-word;
+}
+.ai-loading-error {
+    color: var(--danger);
+}
+.ai-loading-error .btn {
+    margin-top: 8px;
+}
+.ai-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: aiSpin 0.8s linear infinite;
+}
+@keyframes aiSpin {
+    to { transform: rotate(360deg); }
+}
+.ai-chat-input-row input:disabled,
+.ai-chat-input-row button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .ai-chat-input-row {
     display: flex;
     gap: 8px;
