@@ -529,19 +529,21 @@ const App = {
         contentEl.innerHTML = content;
 
         // Append practice section based on test keywords to reinforce tested concepts
-        const test = Tests.getLessonTest(id, progLang) || (typeof TestsExtra !== 'undefined' ? TestsExtra[progLang === 'csharp' ? 'csharp' : 'python'].find(function(t) { return t.id === id; }) : null);
-        if (test && test.keywords && test.keywords.length > 0) {
-            const cz = uiLang === 'cz';
-            const heading = cz ? 'Procvič si' : 'Practice';
-            const intro = cz
-                ? 'Zkus si tyto koncepty v editoru, než přejdeš k testu:'
-                : 'Try these concepts in the editor before taking the test:';
-            const kwList = test.keywords.map(function(kw) { return '<code>' + kw + '</code>'; }).join(', ');
-            const hint = cz
-                ? 'V testu budeš potřebovat: ' + kwList
-                : 'In the test you will need: ' + kwList;
-            contentEl.innerHTML += '<div class="practice-section"><h3>' + heading + '</h3><p>' + intro + '</p><p>' + hint + '</p></div>';
-        }
+        try {
+            const test = Tests.getLessonTest(id, progLang) || (typeof TestsExtra !== 'undefined' ? TestsExtra[progLang === 'csharp' ? 'csharp' : 'python'].find(function(t) { return t.id === id; }) : null);
+            if (test && test.keywords && test.keywords.length > 0) {
+                const cz = uiLang === 'cz';
+                const heading = cz ? 'Procvič si' : 'Practice';
+                const intro = cz
+                    ? 'Zkus si tyto koncepty v editoru, než přejdeš k testu:'
+                    : 'Try these concepts in the editor before taking the test:';
+                const kwList = test.keywords.map(function(kw) { return '<code>' + kw + '</code>'; }).join(', ');
+                const hint = cz
+                    ? 'V testu budeš potřebovat: ' + kwList
+                    : 'In the test you will need: ' + kwList;
+                contentEl.innerHTML += '<div class="practice-section"><h3>' + heading + '</h3><p>' + intro + '</p><p>' + hint + '</p></div>';
+            }
+        } catch (e) { console.warn('Practice section error:', e); }
 
         // Highlight code blocks
         contentEl.querySelectorAll('pre code').forEach(block => {
@@ -620,24 +622,27 @@ const App = {
 
     // Toggle AI chat panel
     toggleAIChat() {
-        const body = document.getElementById('ai-chat-body');
-        const toggle = document.getElementById('ai-chat-toggle');
+        var prefix = AIChat.activePrefix || 'test';
+        const body = document.getElementById(prefix + '-ai-body');
+        const toggle = body ? body.parentElement.querySelector('.ai-chat-toggle') : null;
         if (!body) return;
 
         const isHidden = body.classList.contains('hidden');
         body.classList.toggle('hidden');
-        toggle.innerHTML = isHidden ? '&#x25B2;' : '&#x25BC;';
+        if (toggle) toggle.innerHTML = isHidden ? '&#x25B2;' : '&#x25BC;';
 
         if (isHidden) {
             // Try loading engine on first open
             AIChat.loadEngine();
-            document.getElementById('ai-chat-input').focus();
+            var inputEl = document.getElementById(prefix + '-ai-input');
+            if (inputEl) inputEl.focus();
         }
     },
 
     // Send AI chat message
     async sendAIMessage() {
-        const input = document.getElementById('ai-chat-input');
+        var prefix = AIChat.activePrefix || 'test';
+        const input = document.getElementById(prefix + '-ai-input');
         if (!input) return;
         const msg = input.value.trim();
         if (!msg) return;

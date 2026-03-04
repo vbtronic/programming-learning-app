@@ -25,37 +25,35 @@ const AIChat = {
         this.messages = [];
     },
 
-    // Render AI chat panel into any container
+    // Active container prefix (lesson, test, or hackathon)
+    activePrefix: null,
+
+    // Render/activate AI chat panel in the given container
     renderPanel(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
+        // Determine prefix from container ID (e.g. 'test' from 'test-ai-chat-container')
+        var prefix = containerId.replace('-ai-chat-container', '');
+        this.activePrefix = prefix;
 
-        // Clear other AI chat containers to avoid duplicate IDs in the DOM
-        ['lesson-ai-chat-container', 'test-ai-chat-container', 'hackathon-ai-chat-container'].forEach(function(id) {
-            if (id !== containerId) {
-                var el = document.getElementById(id);
-                if (el) el.innerHTML = '';
+        // Update translations on the active panel
+        try {
+            var panel = document.getElementById(prefix + '-ai-panel');
+            if (panel) {
+                var titleEl = panel.querySelector('[data-i18n="ai.chatTitle"]');
+                if (titleEl) titleEl.textContent = I18n.t('ai.chatTitle');
+                var inputEl = document.getElementById(prefix + '-ai-input');
+                if (inputEl) inputEl.placeholder = I18n.t('ai.placeholder');
+                var sendBtn = panel.querySelector('.ai-chat-send');
+                if (sendBtn) sendBtn.textContent = I18n.t('ai.send');
             }
-        });
+        } catch (e) { /* ignore translation errors */ }
 
-        container.innerHTML =
-            '<div class="ai-chat-panel" id="ai-chat-panel">' +
-                '<div class="ai-chat-header" onclick="App.toggleAIChat()">' +
-                    '<span class="ai-chat-icon">&#x1F916;</span>' +
-                    '<span data-i18n="ai.chatTitle">' + I18n.t('ai.chatTitle') + '</span>' +
-                    '<span class="ai-chat-status" id="ai-chat-status"></span>' +
-                    '<span class="ai-chat-toggle" id="ai-chat-toggle">&#x25BC;</span>' +
-                '</div>' +
-                '<div class="ai-chat-body hidden" id="ai-chat-body">' +
-                    '<div class="ai-chat-messages" id="ai-chat-messages"></div>' +
-                    '<div class="ai-chat-input-row">' +
-                        '<input type="text" class="input ai-chat-input" id="ai-chat-input" ' +
-                            'placeholder="' + I18n.t('ai.placeholder') + '" ' +
-                            'onkeydown="if(event.key===\'Enter\')App.sendAIMessage()">' +
-                        '<button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()">' + I18n.t('ai.send') + '</button>' +
-                    '</div>' +
-                '</div>' +
-            '</div>';
+        // Clear messages from previous context
+        var messagesEl = document.getElementById(prefix + '-ai-messages');
+        if (messagesEl) messagesEl.innerHTML = '';
+
+        // Collapse the body
+        var bodyEl = document.getElementById(prefix + '-ai-body');
+        if (bodyEl) bodyEl.classList.add('hidden');
     },
 
     // Load WebLLM engine (lazy)
@@ -95,7 +93,8 @@ const AIChat = {
 
     // Update status display
     updateStatus(text) {
-        const el = document.getElementById('ai-chat-status');
+        var prefix = this.activePrefix || 'test';
+        var el = document.getElementById(prefix + '-ai-status');
         if (el) el.textContent = text;
     },
 
@@ -129,7 +128,7 @@ const AIChat = {
             var query = userMsg.trim().substring(8).trim();
             if (query) {
                 this.addMessage('user', userMsg);
-                var input = document.getElementById('ai-chat-input');
+                var input = document.getElementById((this.activePrefix || 'test') + '-ai-input');
                 if (input) input.value = '';
                 this.addMessage('ai', '...', true);
                 var searchResults = await this.webSearch(query);
@@ -150,7 +149,7 @@ const AIChat = {
         // Add user message
         this.addMessage('user', userMsg);
 
-        const input = document.getElementById('ai-chat-input');
+        const input = document.getElementById((this.activePrefix || 'test') + '-ai-input');
         if (input) input.value = '';
 
         // Auto web search for knowledge questions, enrich context for WebLLM
@@ -537,7 +536,7 @@ const AIChat = {
 
     // Add message to chat UI
     addMessage(sender, text, isLoading) {
-        const messagesEl = document.getElementById('ai-chat-messages');
+        const messagesEl = document.getElementById((this.activePrefix || 'test') + '-ai-messages');
         if (!messagesEl) return;
 
         if (!isLoading) {
@@ -560,7 +559,7 @@ const AIChat = {
 
     // Replace last message (for streaming / loading)
     replaceLastMessage(text) {
-        const messagesEl = document.getElementById('ai-chat-messages');
+        const messagesEl = document.getElementById((this.activePrefix || 'test') + '-ai-messages');
         if (!messagesEl) return;
         const loading = messagesEl.querySelector('.ai-chat-loading');
         if (loading) {
