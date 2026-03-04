@@ -80,7 +80,7 @@ const AIChat = {
 
         try {
             const webllm = await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/web-llm@0.2.73/+esm');
-            this.engine = await webllm.CreateMLCEngine('SmolLM2-135M-Instruct-q4f16_1-MLC', {
+            this.engine = await webllm.CreateMLCEngine('Llama-3.2-1B-Instruct-q4f16_1-MLC', {
                 initProgressCallback: (progress) => {
                     if (progress.text) {
                         this.updateStatus(progress.text);
@@ -189,11 +189,18 @@ const AIChat = {
             try { userCode = CodeEditor.getCode(this.editorId) || ''; } catch (e) {}
         }
 
+        // Extract plain text context from lesson content
+        var contextText = '';
+        if (ctx.content) {
+            contextText = ctx.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 300);
+        }
+
         // Greeting
         if (/^(hi|hello|hey|ahoj|\u010dau|zdrav\u00edm)/i.test(msg)) {
+            var greetCtx = contextText ? (cz ? ' Vidím, že se učíš o: ' + contextText.substring(0, 100) + '...' : ' I see you\'re learning about: ' + contextText.substring(0, 100) + '...') : '';
             return cz
-                ? 'Ahoj! Jsem tv\u016fj AI asistent. Spolupracujme na "' + ctx.title + '" \u2014 jak ti m\u016f\u017eu pomoct?'
-                : 'Hi! I\'m your AI assistant. Let\'s collaborate on "' + ctx.title + '" \u2014 how can I help?';
+                ? 'Ahoj! Jsem tvůj AI asistent pro "' + ctx.title + '".' + greetCtx + ' Jak ti můžu pomoct?'
+                : 'Hi! I\'m your AI assistant for "' + ctx.title + '".' + greetCtx + ' How can I help?';
         }
 
         // Code review request — return improved code in code block
@@ -256,12 +263,15 @@ const AIChat = {
             }
         }
 
-        // Help / explain — include a short code example
+        // Help / explain — include context + code example
         if (/help|pomoc|explain|vysv\u011btli|jak|how/i.test(msg)) {
+            var contextHint = contextText
+                ? (cz ? '\n\nObsah lekce: ' + contextText.substring(0, 150) + '...' : '\n\nLesson content: ' + contextText.substring(0, 150) + '...')
+                : '';
             if (isPython) {
                 return (cz
-                    ? 'Toto t\u00e9ma se t\u00fdk\u00e1 "' + ctx.title + '". Zde je z\u00e1kladn\u00ed p\u0159\u00edklad:\n'
-                    : 'This topic covers "' + ctx.title + '". Here\'s a basic example:\n') +
+                    ? 'T\u00e9ma "' + ctx.title + '":' + contextHint + '\n\nZde je p\u0159\u00edklad:\n'
+                    : '"' + ctx.title + '":' + contextHint + '\n\nHere\'s an example:\n') +
                     '```python\n' +
                     '# ' + ctx.title + '\n' +
                     'print("Hello, World!")\n\n' +
@@ -272,8 +282,8 @@ const AIChat = {
                     (cz ? 'Zeptej se konkr\u00e9tn\u011bji pro podrobn\u011bj\u0161\u00ed pomoc!' : 'Ask more specifically for detailed help!');
             } else {
                 return (cz
-                    ? 'Toto t\u00e9ma se t\u00fdk\u00e1 "' + ctx.title + '". Zde je z\u00e1kladn\u00ed p\u0159\u00edklad:\n'
-                    : 'This topic covers "' + ctx.title + '". Here\'s a basic example:\n') +
+                    ? 'T\u00e9ma "' + ctx.title + '":' + contextHint + '\n\nZde je p\u0159\u00edklad:\n'
+                    : '"' + ctx.title + '":' + contextHint + '\n\nHere\'s an example:\n') +
                     '```csharp\n' +
                     '// ' + ctx.title + '\n' +
                     'Console.WriteLine("Hello, World!");\n\n' +
@@ -363,23 +373,26 @@ const AIChat = {
             return tips[Math.floor(Math.random() * tips.length)];
         }
 
-        // Default — include a small code example
+        // Default — include context and a code example
+        var ctxInfo = contextText
+            ? (cz ? '\n\nZ lekce: ' + contextText.substring(0, 200) : '\n\nFrom the lesson: ' + contextText.substring(0, 200))
+            : '';
         if (isPython) {
             return (cz
-                ? 'T\u00e9ma "' + ctx.title + '" je d\u016fle\u017eit\u00e9. Zde je mal\u00fd p\u0159\u00edklad:\n'
-                : 'The topic "' + ctx.title + '" is important. Here\'s a small example:\n') +
+                ? 'Pracujeme na "' + ctx.title + '".' + ctxInfo + '\n\nZde je p\u0159\u00edklad:\n'
+                : 'Working on "' + ctx.title + '".' + ctxInfo + '\n\nHere\'s an example:\n') +
                 '```python\n' +
                 'print("Hello!")\nx = 42\nprint(f"Answer: {x}")\n' +
                 '```\n' +
-                (cz ? 'Napi\u0161 mi v\u00edce o tom, co pot\u0159ebuje\u0161!' : 'Tell me more about what you need!');
+                (cz ? 'Napi\u0161 mi konkr\u00e9tn\u011b, co pot\u0159ebuje\u0161!' : 'Tell me specifically what you need!');
         } else {
             return (cz
-                ? 'T\u00e9ma "' + ctx.title + '" je d\u016fle\u017eit\u00e9. Zde je mal\u00fd p\u0159\u00edklad:\n'
-                : 'The topic "' + ctx.title + '" is important. Here\'s a small example:\n') +
+                ? 'Pracujeme na "' + ctx.title + '".' + ctxInfo + '\n\nZde je p\u0159\u00edklad:\n'
+                : 'Working on "' + ctx.title + '".' + ctxInfo + '\n\nHere\'s an example:\n') +
                 '```csharp\n' +
                 'Console.WriteLine("Hello!");\nint x = 42;\nConsole.WriteLine($"Answer: {x}");\n' +
                 '```\n' +
-                (cz ? 'Napi\u0161 mi v\u00edce o tom, co pot\u0159ebuje\u0161!' : 'Tell me more about what you need!');
+                (cz ? 'Napi\u0161 mi konkr\u00e9tn\u011b, co pot\u0159ebuje\u0161!' : 'Tell me specifically what you need!');
         }
     },
 

@@ -3,35 +3,31 @@
    Modern Responsive CSS
    ============================ */
 
-/* Prevent text cursor on all non-interactive elements */
-*, *::before, *::after {
-    cursor: default;
+/* Force default cursor on EVERYTHING except explicit exceptions */
+*:not(input):not(textarea):not(select):not(.ace_editor):not(.ace_editor *):not(a):not(button):not([onclick]):not([role="button"]) {
+    cursor: default !important;
 }
-/* Force default cursor on common text elements that browsers may override */
-h1, h2, h3, h4, h5, h6, p, span, div, section, article, header, footer,
-nav, main, aside, ul, ol, li, pre, code, blockquote, label, legend,
-figure, figcaption, details, summary, table, tr, td, th, caption,
-.page, .container, .card, .lesson-card, .hackathon-card, .badge-card {
-    cursor: default;
-}
+/* Interactive elements: pointer */
 a, button, [onclick], [role="button"], select,
 input[type="checkbox"], input[type="radio"],
-.lesson-card:not(.locked), .hackathon-card:not(.locked), .badge-card {
-    cursor: pointer;
+.lesson-card:not(.locked), .hackathon-card:not(.locked), .badge-card,
+.ai-chat-header, .badge-buy-btn, .btn, .btn-back, .nav-item,
+.settings-option, .lang-option, summary {
+    cursor: pointer !important;
 }
+/* Text inputs: text cursor */
 input[type="text"], input[type="password"], input[type="email"],
 input[type="number"], input[type="search"], textarea {
-    cursor: text;
+    cursor: text !important;
 }
+/* Ace editor: text cursor */
 .ace_editor, .ace_editor * {
     cursor: text !important;
 }
+/* Output: selectable text but default cursor */
 .output-content, .output-content * {
     cursor: default !important;
     user-select: text;
-}
-.ai-chat-header {
-    cursor: pointer !important;
 }
 
 /* CSS Custom Properties - Dark Theme (default) */

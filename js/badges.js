@@ -69,10 +69,10 @@ const Badges = {
         { id: 'clean_coder', icon: '\u{2728}', category: 'intermediate', cost: 170,
           name: { en: 'Clean Coder', cz: 'Čistý kodér' },
           desc: { en: 'Your code is beautiful', cz: 'Tvůj kód je krásný' }},
-        { id: 'python_tamer', icon: '\u{1F40D}', category: 'intermediate', cost: 180,
+        { id: 'python_tamer', icon: '\u{1F40D}', category: 'intermediate', cost: 180, lang: 'python',
           name: { en: 'Python Tamer', cz: 'Krotitel Pythonu' },
           desc: { en: 'Python bends to your will', cz: 'Python se podvoluje tvé vůli' }},
-        { id: 'csharp_smith', icon: '\u{1F528}', category: 'intermediate', cost: 180,
+        { id: 'csharp_smith', icon: '\u{1F528}', category: 'intermediate', cost: 180, lang: 'csharp',
           name: { en: 'C# Smith', cz: 'C# kovář' },
           desc: { en: 'Forging code in C#', cz: 'Kováš kód v C#' }},
         { id: 'logic_master', icon: '\u{1F9E0}', category: 'intermediate', cost: 200,
@@ -178,15 +178,23 @@ const Badges = {
           desc: { en: 'Completed the final hackathon challenge!', cz: 'Dokončil jsi finální hackathonovou výzvu!' }},
     ],
 
-    // Get all badges
-    getAll() {
-        return this.catalog;
+    // Get badges filtered by current programming language
+    getFiltered() {
+        const profile = Storage.getProfile();
+        const progLang = profile.progLang || 'python';
+        return this.catalog.filter(b => !b.lang || b.lang === progLang);
     },
 
-    // Get badges by category
+    // Get all badges (filtered by language)
+    getAll() {
+        return this.getFiltered();
+    },
+
+    // Get badges by category (filtered by language)
     getByCategory(category) {
-        if (category === 'all') return this.catalog;
-        return this.catalog.filter(b => b.category === category);
+        const filtered = this.getFiltered();
+        if (category === 'all') return filtered;
+        return filtered.filter(b => b.category === category);
     },
 
     // Get badge by ID

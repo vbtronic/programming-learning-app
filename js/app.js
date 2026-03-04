@@ -549,21 +549,14 @@ const App = {
         this.showPage('hackathon');
         const profile = Storage.getProfile();
         const progLang = profile.progLang;
-        const uiLang = profile.uiLang || 'en';
-        const cz = uiLang === 'cz';
 
-        // Generic hackathon title and description (no topic)
+        // Just title, no description or hints
         const challengeEl = document.getElementById('hackathon-challenge');
         var title = 'Hackathon #' + id;
-        var desc = cz
-            ? '<p>Toto je <strong>hackathon</strong> \u2014 voln\u00e9 programov\u00e1n\u00ed. Napi\u0161 jak\u00fdkoli program a uka\u017e sv\u00e9 dovednosti!</p><ul><li>Pou\u017eij funkce, t\u0159\u00eddy a \u010dist\u00fd k\u00f3d pro vy\u0161\u0161\u00ed sk\u00f3re</li><li>P\u0159idej koment\u00e1\u0159e a o\u0161et\u0159en\u00ed chyb pro bonusov\u00e9 body</li></ul>'
-            : '<p>This is a <strong>hackathon</strong> \u2014 free coding. Write any program and show your skills!</p><ul><li>Use functions, classes, and clean code for a higher score</li><li>Add comments and error handling for bonus points</li></ul>';
-        challengeEl.innerHTML = '<h1>' + title + '</h1><div class="hackathon-desc">' + desc + '</div>';
+        challengeEl.innerHTML = '<h1>' + title + '</h1>';
 
-        // Editor with blank starter
-        var starter = progLang === 'python'
-            ? '# Hackathon #' + id + '\n# Write your code here!\n\n'
-            : '// Hackathon #' + id + '\n// Write your code here!\n\nusing System;\n\nclass Program {\n    static void Main() {\n        \n    }\n}\n';
+        // Empty editor (no starter code)
+        var starter = '';
         CodeEditor.destroy('hackathon-editor');
         CodeEditor.create('hackathon-editor', { lang: progLang, value: starter });
 
@@ -582,7 +575,7 @@ const App = {
                 lessonId: id,
                 title: { en: 'Hackathon #' + id, cz: 'Hackathon #' + id },
                 description: { en: 'Free coding challenge', cz: 'Voln\u00e1 programovac\u00ed v\u00fdzva' },
-                challenge: { en: desc, cz: desc },
+                challenge: { en: '', cz: '' },
                 starter: starter,
                 keywords: [],
                 maxScore: 100,
@@ -1102,7 +1095,6 @@ const App = {
     },
 
     createHackathon() {
-        const profile = Storage.getProfile();
         const hackathons = Storage.getHackathons();
 
         if (hackathons.active) {
@@ -1111,21 +1103,15 @@ const App = {
         }
 
         const num = hackathons.nextId;
-        const starter = profile.progLang === 'python'
-            ? '# Hackathon #' + num + '\n# Write your code here!\n\n'
-            : '// Hackathon #' + num + '\n// Write your code here!\n\nusing System;\n\nclass Program {\n    static void Main() {\n        \n    }\n}\n';
 
         const newHackathon = {
             id: num,
             type: 'generated',
             lessonId: null,
             title: { en: 'Free Hackathon #' + num, cz: 'Voln\u00fd hackathon #' + num },
-            description: { en: 'Write any program you want!', cz: 'Napi\u0161 jak\u00fdkoli program!' },
-            challenge: {
-                en: '<p>This is a <strong>free hackathon</strong> \u2014 there is no prescribed topic. Code whatever you want!</p><ul><li>Show off your creativity and programming skills</li><li>Use functions, classes, and clean code for a higher score</li><li>Add comments and error handling for bonus points</li><li>The more complex and well-structured your code, the better</li></ul>',
-                cz: '<p>Toto je <strong>voln\u00fd hackathon</strong> \u2014 \u017e\u00e1dn\u00e9 p\u0159edepsan\u00e9 t\u00e9ma. Programuj co chce\u0161!</p><ul><li>Uka\u017e svou kreativitu a programovac\u00ed dovednosti</li><li>Pou\u017eij funkce, t\u0159\u00eddy a \u010dist\u00fd k\u00f3d pro vy\u0161\u0161\u00ed sk\u00f3re</li><li>P\u0159idej koment\u00e1\u0159e a o\u0161et\u0159en\u00ed chyb pro bonusov\u00e9 body</li><li>\u010c\u00edm slo\u017eit\u011bj\u0161\u00ed a l\u00e9pe strukturovan\u00fd k\u00f3d, t\u00edm l\u00e9pe</li></ul>'
-            },
-            starter: starter,
+            description: { en: '', cz: '' },
+            challenge: { en: '', cz: '' },
+            starter: '',
             keywords: [],
             maxScore: 100,
             createdAt: new Date().toISOString(),
@@ -1161,11 +1147,10 @@ const App = {
             backBtn.href = hackathon.lessonId ? '#lessons' : '#hackathons';
         }
 
-        // Render challenge
+        // Render just title, no description or hints
         const challengeEl = document.getElementById('hackathon-challenge');
         const title = hackathon.title[uiLang] || hackathon.title.en;
-        const desc = hackathon.challenge[uiLang] || hackathon.challenge.en;
-        challengeEl.innerHTML = '<h1>' + title + '</h1><div class="hackathon-desc">' + desc + '</div>';
+        challengeEl.innerHTML = '<h1>' + title + '</h1>';
 
         // Editor
         CodeEditor.destroy('hackathon-editor');
@@ -1186,7 +1171,7 @@ const App = {
         }
 
         // AI Chat
-        AIChat.init(title, '', progLang, 'hackathon-editor');
+        AIChat.init(title, 'Free coding hackathon', progLang, 'hackathon-editor');
         AIChat.renderPanel('hackathon-ai-chat-container');
     },
 
