@@ -217,7 +217,7 @@ const CodeEditor = {
                 ? `\n_input_queue = ${JSON.stringify(inputValues)}\n_input_index = 0\ndef input(prompt=""):\n    global _input_index\n    if _input_index < len(_input_queue):\n        val = _input_queue[_input_index]\n        _input_index += 1\n        return val\n    return ""\n`
                 : '';
 
-            // Capture stdout
+            // Capture stdout and use REPL-like execution (shows expression values)
             pyodide.runPython(`
 import sys
 from io import StringIO
@@ -226,9 +226,27 @@ sys.stderr = StringIO()
 ${inputSetup}
             `);
 
-            let lastExprValue = undefined;
+            // Use ast to detect bare expressions and print their values (REPL behavior)
             try {
-                lastExprValue = pyodide.runPython(code);
+                pyodide.runPython(`
+import ast as _ast
+_code = ${JSON.stringify(code)}
+try:
+    _tree = _ast.parse(_code)
+    _lines = _code.splitlines()
+    for _node in _tree.body:
+        _src = _ast.get_source_segment(_code, _node)
+        if _src is None:
+            _src = '\\n'.join(_lines[_node.lineno - 1 : _node.end_lineno])
+        if isinstance(_node, _ast.Expr):
+            _val = eval(compile(_ast.Expression(body=_node.value), '<expr>', 'eval'))
+            if _val is not None:
+                print(repr(_val))
+        else:
+            exec(compile(_ast.Module(body=[_node], type_ignores=[]), '<block>', 'exec'))
+except Exception as _e:
+    print(str(_e), file=sys.stderr)
+`);
             } catch (pyErr) {
                 const stderr = pyodide.runPython('sys.stderr.getvalue()');
                 return { output: '', error: stderr || pyErr.message, success: false };
@@ -236,14 +254,6 @@ ${inputSetup}
 
             let stdout = pyodide.runPython('sys.stdout.getvalue()');
             const stderr = pyodide.runPython('sys.stderr.getvalue()');
-
-            // REPL-like: if no stdout, show last expression value
-            if (!stdout.trim() && lastExprValue !== undefined && lastExprValue !== null) {
-                const reprVal = String(lastExprValue);
-                if (reprVal && reprVal !== 'undefined' && reprVal !== 'None') {
-                    stdout = reprVal + '\n';
-                }
-            }
 
             // Reset stdout/stderr
             pyodide.runPython(`
