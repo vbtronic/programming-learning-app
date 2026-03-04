@@ -65,38 +65,30 @@ var AIChat = {
         }
     },
 
-    // Load WebLLM engine (lazy)
+    // Load WebLLM engine in background (non-blocking)
     async loadEngine() {
-        if (this.ready) return true;
-        if (this.loading) return false;
-
-        if (!this.checkSupport()) {
-            this.updateStatus('');
-            return false;
-        }
+        if (this.ready || this.loading) return;
+        if (!this.checkSupport()) return;
 
         this.loading = true;
-        this.updateStatus(I18n.currentLang === 'cz' ? 'Nac\u030ci\u0301ta\u0301ni\u0301 AI modelu...' : 'Loading AI model...');
+        var cz = I18n.currentLang === 'cz';
+        this.updateStatus(cz ? 'Načítání AI modelu na pozadí...' : 'Loading AI model in background...');
 
         try {
             const webllm = await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/web-llm@0.2.73/+esm');
             this.engine = await webllm.CreateMLCEngine('Llama-3.2-3B-Instruct-q4f16_1-MLC', {
                 initProgressCallback: (progress) => {
-                    if (progress.text) {
-                        this.updateStatus(progress.text);
-                    }
+                    if (progress.text) this.updateStatus(progress.text);
                 }
             });
             this.ready = true;
             this.loading = false;
-            this.updateStatus(I18n.currentLang === 'cz' ? 'AI pr\u030ci\u0301praveno' : 'AI ready');
-            return true;
+            this.updateStatus(cz ? 'AI model připraven' : 'AI model ready');
         } catch (e) {
             console.warn('WebLLM failed to load:', e);
             this.loading = false;
             this.ready = false;
-            this.updateStatus('');
-            return false;
+            this.updateStatus(cz ? 'AI odpovídá bez modelu' : 'AI responds without model');
         }
     },
 
@@ -161,22 +153,11 @@ var AIChat = {
         const input = document.getElementById((this.activePrefix || 'test') + '-ai-input');
         if (input) input.value = '';
 
-        // Auto web search for knowledge questions, enrich context for WebLLM
-        var searchContext = '';
-        if (/what is|how to|define|meaning|co je|jak se|definice|vysvětli|explain/i.test(userMsg)) {
-            try {
-                var searchResult = await this.webSearch(userMsg);
-                if (searchResult && searchResult.length > 10) {
-                    searchContext = '\n\nWeb search context: ' + searchResult.substring(0, 400);
-                }
-            } catch (e) { /* ignore */ }
-        }
-
-        // Try WebLLM first
+        // If WebLLM is ready, use it for smarter responses
         if (this.ready && this.engine) {
             try {
                 this.addMessage('ai', '...', true);
-                const systemPrompt = this.buildSystemPrompt() + searchContext;
+                const systemPrompt = this.buildSystemPrompt();
                 const msgs = [
                     { role: 'system', content: systemPrompt },
                     ...this.messages.filter(m => m.role !== 'system').slice(-6).map(m => ({
@@ -199,9 +180,14 @@ var AIChat = {
             }
         }
 
-        // Fallback: keyword-based response
+        // Instant fallback response (while model loads or if not supported)
         const response = this.getFallbackResponse(userMsg);
         this.addMessage('ai', response);
+
+        // Start loading model in background for next messages
+        if (!this.ready && !this.loading) {
+            this.loadEngine();
+        }
     },
 
     // Build system prompt with context + user code + user profile

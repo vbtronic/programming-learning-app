@@ -37,7 +37,7 @@ const Badges = {
           desc: { en: 'Got 100 points on a test', cz: 'Získal 100 bodů v testu' }},
         { id: 'half_way', icon: '\u{1F3AF}', category: 'intermediate', cost: 200,
           name: { en: 'Halfway There', cz: 'V půlce cesty' },
-          desc: { en: 'Completed 10 lessons', cz: 'Dokončil 10 lekcí' }},
+          desc: { en: 'Completed 25 lessons', cz: 'Dokončil 25 lekcí' }},
         { id: 'night_owl', icon: '\u{1F989}', category: 'intermediate', cost: 200,
           name: { en: 'Night Owl', cz: 'Noční sova' },
           desc: { en: 'Coding into the night', cz: 'Kóduješ do noci' }},
