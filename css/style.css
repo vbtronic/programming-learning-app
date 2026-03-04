@@ -1825,6 +1825,19 @@ body {
     color: var(--text-muted);
     margin-top: 4px;
 }
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
 .dashboard-stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

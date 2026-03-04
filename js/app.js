@@ -999,6 +999,17 @@ const App = {
                     '<p>U každé lekce najdeš rozklikávatelnou mapu znalostí. Obsahuje témata lekce, klíčové pojmy, tipy a ukázky kódu. Klikni na ni pro rozbalení.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
+                    '<h2>Dashboard výkonu</h2>' +
+                    '<p>V nastavení najdeš graf svých výsledků. Sloupce ukazují skóre jednotlivých testů:</p>' +
+                    '<ul>' +
+                        '<li><strong>L1, L2, L3...</strong> — výsledky testů z lekcí (L = Lekce)</li>' +
+                        '<li><strong>H1, H2, H3...</strong> — výsledky hackathonů (H = Hackathon)</li>' +
+                        '<li>Číslo nad sloupcem = tvoje skóre v %</li>' +
+                        '<li>Zelená = 80+%, oranžová = 50–79%, červená = pod 50%</li>' +
+                        '<li>Čárkovaná čára = tvůj průměr</li>' +
+                    '</ul>' +
+                '</div>' +
+                '<div class="help-section">' +
                     '<h2>Odznaky</h2>' +
                     '<p>Za body z testů a hackathonů si můžeš kupovat odznaky v obchodě. Sbírej všech 50+!</p>' +
                 '</div>' +
@@ -1034,6 +1045,17 @@ const App = {
                 '<div class="help-section">' +
                     '<h2>Knowledge Map</h2>' +
                     '<p>Each lesson has an expandable knowledge map. It contains lesson topics, key concepts, tips, and code examples. Click to expand it.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Performance Dashboard</h2>' +
+                    '<p>In Settings you\'ll find a chart of your results. The bars show individual test scores:</p>' +
+                    '<ul>' +
+                        '<li><strong>L1, L2, L3...</strong> — lesson test results (L = Lesson)</li>' +
+                        '<li><strong>H1, H2, H3...</strong> — hackathon results (H = Hackathon)</li>' +
+                        '<li>Number above bar = your score in %</li>' +
+                        '<li>Green = 80+%, orange = 50–79%, red = below 50%</li>' +
+                        '<li>Dashed line = your average</li>' +
+                    '</ul>' +
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Badges</h2>' +
@@ -1372,6 +1394,10 @@ const App = {
                 '<span class="chart-bar-label">' + d.label + '</span></div>';
         });
         barsHtml += '</div>';
+        barsHtml += '<div class="chart-legend">' +
+            '<span class="chart-legend-item"><strong>L</strong> = ' + (cz ? 'Lekce' : 'Lesson') + '</span>' +
+            '<span class="chart-legend-item"><strong>H</strong> = Hackathon</span>' +
+            '</div>';
         chartEl.innerHTML = barsHtml;
 
         // Analysis: strengths and weaknesses
