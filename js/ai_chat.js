@@ -51,11 +51,10 @@ const AIChat = {
         var messagesEl = document.getElementById(prefix + '-ai-messages');
         if (messagesEl) messagesEl.innerHTML = '';
 
-        // Collapse the body (use inline style to override !important in .hidden)
+        // Collapse the body
         var bodyEl = document.getElementById(prefix + '-ai-body');
         if (bodyEl) {
             bodyEl.style.display = 'none';
-            bodyEl.classList.add('hidden');
         }
 
         // Reset toggle arrow
