@@ -444,6 +444,12 @@ const Hackathons = {
                 }
             });
             totalScore += Math.round((found / keywords.length) * 30);
+        } else {
+            // Free-form hackathon: award keyword points based on code substance
+            const lines = code.split('\n').filter(l => l.trim().length > 0);
+            if (lines.length >= 3) totalScore += 10;
+            if (lines.length >= 8) totalScore += 10;
+            if (lines.length >= 15) totalScore += 10;
         }
 
         // ── 2. Code Quality (40 points) ─────────────────────────

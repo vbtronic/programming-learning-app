@@ -144,7 +144,7 @@ const AIChat = {
     buildSystemPrompt() {
         const ctx = this.lessonContext;
         const lang = I18n.currentLang === 'cz' ? 'Czech' : 'English';
-        let prompt = 'You are a helpful programming tutor. The student is studying "' + ctx.title + '" in ' + ctx.lang + '. Answer in ' + lang + '. Keep responses short (2-3 sentences). Use code examples when helpful.';
+        let prompt = 'You are a collaborative programming agent. You work together with the student on "' + ctx.title + '" in ' + ctx.lang + '. Answer in ' + lang + '. Keep responses short (2-3 sentences). Use code examples when helpful. Help improve their code, suggest ideas, and collaborate on solutions.';
 
         // Include current editor code if available
         if (this.editorId && typeof CodeEditor !== 'undefined') {
@@ -175,8 +175,8 @@ const AIChat = {
         // Greeting
         if (/^(hi|hello|hey|ahoj|\u010dau|zdrav\u00edm)/i.test(msg)) {
             return cz
-                ? 'Ahoj! Jsem tv\u016fj AI asistent. Zeptej se m\u011b na cokoliv o t\u00e9matu "' + ctx.title + '".'
-                : 'Hi! I\'m your AI assistant. Ask me anything about "' + ctx.title + '".';
+                ? 'Ahoj! Jsem tv\u016fj AI agent. Spolupracujme na "' + ctx.title + '" \u2014 jak ti m\u016f\u017eu pomoct?'
+                : 'Hi! I\'m your AI agent. Let\'s collaborate on "' + ctx.title + '" \u2014 how can I help?';
         }
 
         // Code review request

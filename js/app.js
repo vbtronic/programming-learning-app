@@ -88,11 +88,15 @@ const App = {
             this.showLessons();
         } else if (hash === '#badges') {
             this.showBadges();
+        } else if (hash === '#history') {
+            this.showHistory();
         } else if (hash === '#hackathons') {
             this.showHackathons();
         } else if (hash.startsWith('#hackathon/')) {
             const id = parseInt(hash.split('/')[1]);
             this.showHackathon(id);
+        } else if (hash === '#help') {
+            this.showHelp();
         } else if (hash === '#settings') {
             this.showSettings();
         } else if (hash === '#assessment') {
@@ -364,11 +368,11 @@ const App = {
         profile.level = Tests.determineLevel(progress.assessmentScore || 0).level;
         profile.startLesson = progress.currentLesson || 1;
 
-        // Check if this was a second language assessment
+        // Mark assessment as done for current programming language
+        profile[profile.progLang + 'AssessmentDone'] = true;
+
+        // If this was a language switch assessment, stay on new language
         if (profile.origProgLang) {
-            const secondLang = profile.progLang;
-            profile[secondLang + 'AssessmentDone'] = true;
-            profile.progLang = profile.origProgLang;
             delete profile.origProgLang;
             delete profile.secondLangId;
         }
@@ -812,6 +816,171 @@ const App = {
         }
     },
 
+    // ==================== HISTORY ====================
+
+    showHistory() {
+        this.showPage('history');
+        const profile = Storage.getProfile();
+        const progress = Storage.getProgress();
+        const uiLang = profile.uiLang || 'en';
+        const progLang = profile.progLang;
+        const hackathons = Storage.getHackathons();
+        const cz = uiLang === 'cz';
+
+        let html = '';
+
+        // Completed Lessons
+        const completedLessons = progress.completedLessons.filter(l => l.lang === progLang);
+        html += '<div class="history-section"><h2>' + I18n.t('history.lessons') + ' (' + completedLessons.length + ')</h2>';
+        if (completedLessons.length === 0) {
+            html += '<p class="history-empty">' + I18n.t('history.noLessons') + '</p>';
+        } else {
+            html += '<div class="history-list">';
+            completedLessons.sort(function(a, b) { return a.id - b.id; }).forEach(function(l) {
+                const lesson = Lessons.getLesson(l.id);
+                const title = lesson ? Lessons.getTitle(lesson, progLang, uiLang) : (cz ? 'Lekce' : 'Lesson');
+                const score = Storage.getTestScore(l.id, progLang);
+                html += '<a href="#lesson/' + l.id + '" class="history-item">' +
+                    '<span class="history-item-icon">&#x1F4DA;</span>' +
+                    '<span class="history-item-title">' + I18n.t('lesson.lessonN', { n: l.id }) + ': ' + title + '</span>' +
+                    (score > 0 ? '<span class="history-item-score">' + score + '/100</span>' : '') +
+                '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Test Scores
+        const testKeys = Object.keys(progress.testScores).filter(function(k) { return k.endsWith('_' + progLang); });
+        html += '<div class="history-section"><h2>' + I18n.t('history.tests') + ' (' + testKeys.length + ')</h2>';
+        if (testKeys.length === 0) {
+            html += '<p class="history-empty">' + I18n.t('history.noTests') + '</p>';
+        } else {
+            html += '<div class="history-list">';
+            testKeys.sort(function(a, b) { return parseInt(a) - parseInt(b); }).forEach(function(k) {
+                const lessonId = parseInt(k);
+                const score = progress.testScores[k];
+                const lesson = Lessons.getLesson(lessonId);
+                const title = lesson ? Lessons.getTitle(lesson, progLang, uiLang) : (cz ? 'Test' : 'Test');
+                const passed = score >= 50;
+                html += '<a href="#test/' + lessonId + '" class="history-item">' +
+                    '<span class="history-item-icon">&#x1F4DD;</span>' +
+                    '<span class="history-item-title">' + I18n.t('lesson.lessonN', { n: lessonId }) + ': ' + title + '</span>' +
+                    '<span class="history-item-score ' + (passed ? 'passed' : 'failed') + '">' + score + '/100</span>' +
+                '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Hackathon History
+        html += '<div class="history-section"><h2>' + I18n.t('history.hackathons') + ' (' + hackathons.history.length + ')</h2>';
+        if (hackathons.history.length === 0) {
+            html += '<p class="history-empty">' + I18n.t('history.noHackathons') + '</p>';
+        } else {
+            html += '<div class="history-list">';
+            hackathons.history.slice().reverse().forEach(function(h) {
+                const title = h.title[uiLang] || h.title.en;
+                const date = new Date(h.completedAt).toLocaleDateString();
+                const passed = h.score >= 50;
+                html += '<a href="#hackathon/' + h.id + '" class="history-item">' +
+                    '<span class="history-item-icon">&#x1F680;</span>' +
+                    '<span class="history-item-title">' + title + '</span>' +
+                    '<span class="history-item-score ' + (passed ? 'passed' : 'failed') + '">' + h.score + '/100</span>' +
+                    '<span class="history-item-date">' + date + '</span>' +
+                '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        document.getElementById('history-content').innerHTML = html;
+    },
+
+    // ==================== HELP ====================
+
+    showHelp() {
+        this.showPage('help');
+        const cz = I18n.currentLang === 'cz';
+        const el = document.getElementById('help-content');
+
+        if (cz) {
+            el.innerHTML =
+                '<div class="help-section">' +
+                    '<h2>Jak aplikace funguje</h2>' +
+                    '<p>CodeLearn je interaktivní aplikace pro výuku programování. Projdi 50 lekcí, splň testy a sbírej odznaky.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Lekce</h2>' +
+                    '<p>Každá lekce obsahuje teorii a příklady kódu. Po prostudování lekce spusť test pro ověření znalostí.</p>' +
+                    '<p>Lekce se odemykají postupně — musíš splnit test předchozí lekce (skóre alespoň 50/100).</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Testy</h2>' +
+                    '<p>Každý test ti dá programovací úkol. Napiš kód, spusť ho tlačítkem "Spustit" a pak odešli. Skóre 50+ znamená splněno.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Hackathony</h2>' +
+                    '<p>Hackathony jsou volné programovací výzvy — žádné předepsané téma, programuj co chceš! AI ohodnotí tvůj kód podle kvality a kreativity.</p>' +
+                    '<p>Každá 10. lekce (10, 20, 30, 40, 50) je také hackathon.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>AI Asistent</h2>' +
+                    '<p>AI asistent ti pomáhá s kódem — vidí co píšeš a může poradit. Můžeš ho zapnout/vypnout v Nastavení.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Odznaky</h2>' +
+                    '<p>Za body z testů a hackathonů si můžeš kupovat odznaky v obchodě. Sbírej všech 50+!</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Tipy</h2>' +
+                    '<ul>' +
+                        '<li>Pravidelně procvičuj — i 15 minut denně pomůže</li>' +
+                        '<li>Neboj se experimentovat s kódem v editoru</li>' +
+                        '<li>Využij AI asistenta když si nevíš rady</li>' +
+                        '<li>Opakuj starší lekce přes sekci Historie</li>' +
+                    '</ul>' +
+                '</div>';
+        } else {
+            el.innerHTML =
+                '<div class="help-section">' +
+                    '<h2>How the App Works</h2>' +
+                    '<p>CodeLearn is an interactive programming learning app. Complete 50 lessons, pass tests, and collect badges.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Lessons</h2>' +
+                    '<p>Each lesson contains theory and code examples. After studying, take the test to verify your knowledge.</p>' +
+                    '<p>Lessons unlock progressively — you must pass the previous test (score 50+/100).</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Tests</h2>' +
+                    '<p>Each test gives you a coding task. Write code, run it with "Run", then submit. Score 50+ means passed.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Hackathons</h2>' +
+                    '<p>Hackathons are free coding challenges — no prescribed topic, code whatever you want! AI evaluates your code based on quality and creativity.</p>' +
+                    '<p>Every 10th lesson (10, 20, 30, 40, 50) is also a hackathon.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>AI Assistant</h2>' +
+                    '<p>The AI assistant helps with your code — it sees what you write and can advise. Toggle it on/off in Settings.</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Badges</h2>' +
+                    '<p>Use points from tests and hackathons to buy badges in the shop. Collect all 50+!</p>' +
+                '</div>' +
+                '<div class="help-section">' +
+                    '<h2>Tips</h2>' +
+                    '<ul>' +
+                        '<li>Practice regularly — even 15 minutes a day helps</li>' +
+                        '<li>Don\'t be afraid to experiment with code in the editor</li>' +
+                        '<li>Use the AI assistant when you\'re stuck</li>' +
+                        '<li>Repeat older lessons via the History section</li>' +
+                    '</ul>' +
+                '</div>';
+        }
+    },
+
     // ==================== HACKATHONS ====================
 
     showHackathons() {
@@ -847,13 +1016,17 @@ const App = {
             const title = Lessons.getTitle(lesson, progLang, uiLang);
             const completed = Storage.isLessonCompleted(lessonId, progLang);
             const score = Storage.getTestScore(lessonId, progLang);
+            const isLocked = !completed;
             const card = document.createElement('div');
-            card.className = 'hackathon-card' + (completed ? ' completed' : '');
+            card.className = 'hackathon-card' + (completed ? ' completed' : '') + (isLocked ? ' locked' : '');
             card.innerHTML =
-                '<span class="hackathon-icon">&#x1F680;</span>' +
+                '<span class="hackathon-icon">' + (isLocked ? '&#x1F512;' : '&#x1F680;') + '</span>' +
                 '<h3>' + I18n.t('lesson.lessonN', { n: lessonId }) + ': ' + title + '</h3>' +
+                (isLocked ? '<p class="hackathon-locked-text">' + I18n.t('hackathons.lockedText') + '</p>' : '') +
                 (score > 0 ? '<span class="hackathon-score-badge">' + score + '/100</span>' : '');
-            card.onclick = function() { location.hash = '#lesson/' + lessonId; };
+            if (!isLocked) {
+                card.onclick = function() { location.hash = '#lesson/' + lessonId; };
+            }
             lessonGrid.appendChild(card);
         });
 
@@ -883,17 +1056,24 @@ const App = {
             return;
         }
 
-        const challenge = Hackathons.generateChallenge(profile.progLang, profile.level);
+        const num = hackathons.nextId;
+        const starter = profile.progLang === 'python'
+            ? '# Hackathon #' + num + '\n# Write your code here!\n\n'
+            : '// Hackathon #' + num + '\n// Write your code here!\n\nusing System;\n\nclass Program {\n    static void Main() {\n        \n    }\n}\n';
+
         const newHackathon = {
-            id: hackathons.nextId,
+            id: num,
             type: 'generated',
             lessonId: null,
-            title: challenge.title,
-            description: challenge.description,
-            challenge: challenge.challenge,
-            starter: challenge.starter,
-            keywords: challenge.keywords,
-            maxScore: challenge.maxScore,
+            title: { en: 'Free Hackathon #' + num, cz: 'Voln\u00fd hackathon #' + num },
+            description: { en: 'Write any program you want!', cz: 'Napi\u0161 jak\u00fdkoli program!' },
+            challenge: {
+                en: '<p>This is a <strong>free hackathon</strong> \u2014 there is no prescribed topic. Code whatever you want!</p><ul><li>Show off your creativity and programming skills</li><li>Use functions, classes, and clean code for a higher score</li><li>Add comments and error handling for bonus points</li><li>The more complex and well-structured your code, the better</li></ul>',
+                cz: '<p>Toto je <strong>voln\u00fd hackathon</strong> \u2014 \u017e\u00e1dn\u00e9 p\u0159edepsan\u00e9 t\u00e9ma. Programuj co chce\u0161!</p><ul><li>Uka\u017e svou kreativitu a programovac\u00ed dovednosti</li><li>Pou\u017eij funkce, t\u0159\u00eddy a \u010dist\u00fd k\u00f3d pro vy\u0161\u0161\u00ed sk\u00f3re</li><li>P\u0159idej koment\u00e1\u0159e a o\u0161et\u0159en\u00ed chyb pro bonusov\u00e9 body</li><li>\u010c\u00edm slo\u017eit\u011bj\u0161\u00ed a l\u00e9pe strukturovan\u00fd k\u00f3d, t\u00edm l\u00e9pe</li></ul>'
+            },
+            starter: starter,
+            keywords: [],
+            maxScore: 100,
             createdAt: new Date().toISOString(),
             completedAt: null,
             score: null,
@@ -1169,6 +1349,23 @@ const App = {
 
     changeProgLang(lang) {
         const profile = Storage.getProfile();
+        if (lang === profile.progLang) return;
+
+        // Check if assessment done for this language
+        const assessmentKey = lang + 'AssessmentDone';
+        if (!profile[assessmentKey]) {
+            // Need assessment for new language
+            profile.origProgLang = profile.progLang;
+            profile.progLang = lang;
+            Storage.saveProfile(profile);
+            this.state.assessmentIndex = 0;
+            this.state.assessmentScores = [];
+            location.hash = '#assessment';
+            this.showPage('assessment');
+            this.loadAssessmentTask(0);
+            return;
+        }
+
         profile.progLang = lang;
         Storage.saveProfile(profile);
     },

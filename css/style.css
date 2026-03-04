@@ -840,7 +840,7 @@ body {
 
 .home-nav-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin: 28px 0;
 }
@@ -1082,6 +1082,7 @@ body {
     border-radius: var(--radius);
     padding: 36px;
     line-height: 1.8;
+    cursor: default;
     box-shadow: var(--shadow-card);
 }
 
@@ -1162,6 +1163,7 @@ body {
     padding: 16px 20px;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     margin: 24px 0;
+    cursor: default;
 }
 
 .lesson-content .tip p {
@@ -1304,6 +1306,7 @@ body {
     color: var(--text-secondary);
     line-height: 1.7;
     box-shadow: var(--shadow-card);
+    cursor: default;
 }
 
 .test-description code {
@@ -1898,6 +1901,7 @@ body {
     margin-bottom: 24px;
     line-height: 1.7;
     color: var(--text-secondary);
+    cursor: default;
 }
 
 .hackathon-desc ul {
@@ -1953,6 +1957,157 @@ body {
     font-size: 1.2rem;
 }
 
+/* ===== HISTORY PAGE ===== */
+.history-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.history-section {
+    margin-bottom: 32px;
+}
+
+.history-section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all var(--transition);
+    cursor: pointer;
+}
+
+.history-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    transform: translateX(4px);
+}
+
+.history-item-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.history-item-title {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.history-item-score {
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 2px 10px;
+    border-radius: var(--radius-xs);
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.history-item-score.passed {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.history-item-score.failed {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.history-item-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.history-empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ===== HELP PAGE ===== */
+.help-content {
+    cursor: default;
+}
+
+.help-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.help-section h2 {
+    font-size: 1.15rem;
+    margin-bottom: 10px;
+    color: var(--accent);
+}
+
+.help-section p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 8px;
+}
+
+.help-section p:last-child {
+    margin-bottom: 0;
+}
+
+.help-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.help-section ul li {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    padding: 4px 0 4px 20px;
+    position: relative;
+}
+
+.help-section ul li::before {
+    content: '\2022';
+    color: var(--accent);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+/* Locked hackathon card in hackathons section */
+.hackathon-card.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.hackathon-card.locked:hover {
+    transform: none;
+    border-color: var(--border);
+}
+
+.hackathon-locked-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 4px 0 0;
+}
+
 /* ===== MOBILE BOTTOM NAV ===== */
 #mobile-nav {
     display: none;
@@ -1960,30 +2115,31 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: auto;
     background: var(--nav-bg);
     border-top: 1px solid var(--nav-border);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     z-index: 1000;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
-    padding: 0 8px;
+    flex-wrap: wrap;
+    padding: 4px 4px;
 }
 
 .mobile-nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     text-decoration: none;
     color: var(--text-muted);
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 600;
-    padding: 6px 12px;
+    padding: 4px 8px;
     border-radius: var(--radius-sm);
     transition: all var(--transition-fast);
-    min-width: 60px;
+    min-width: 48px;
 }
 
 .mobile-nav-item:hover, .mobile-nav-item.active {
@@ -2003,7 +2159,7 @@ body {
     }
 
     body {
-        padding-bottom: 64px;
+        padding-bottom: 80px;
     }
 
     #main-nav {
@@ -2016,6 +2172,10 @@ body {
 
     #mobile-nav {
         display: flex;
+    }
+
+    .home-nav-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .nav-brand span:not(.nav-logo) {

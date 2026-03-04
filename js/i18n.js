@@ -13,7 +13,9 @@ const I18n = {
             'nav.home': 'Home',
             'nav.lessons': 'Lessons',
             'nav.badges': 'Badges',
+            'nav.history': 'History',
             'nav.hackathons': 'Hackathons',
+            'nav.help': 'Help',
             'nav.settings': 'Settings',
 
             // Home
@@ -29,8 +31,12 @@ const I18n = {
             'home.nav.lessonsDesc': '50 progressive lessons with hands-on coding',
             'home.nav.badges': 'Badge Shop',
             'home.nav.badgesDesc': 'Collect 50+ badges with your earned points',
+            'home.nav.history': 'Activity History',
+            'home.nav.historyDesc': 'Review and repeat completed activities',
             'home.nav.hackathons': 'Hackathons',
             'home.nav.hackathonsDesc': 'Creative coding challenges with AI evaluation',
+            'home.nav.help': 'Help',
+            'home.nav.helpDesc': 'How to use the app and tips',
             'home.nav.settings': 'Settings & Profile',
             'home.nav.settingsDesc': 'Manage language, profile, and progress',
 
@@ -43,8 +49,22 @@ const I18n = {
             'hackathons.lessonHackathons': 'Lesson Hackathons',
             'hackathons.history': 'Completed Hackathons',
             'hackathons.noHistory': 'No completed hackathons yet.',
+            'hackathons.lockedText': 'Complete this lesson first',
             'hackathon.backToList': '\u2190 Back to Hackathons',
             'hackathon.submit': 'Submit Hackathon',
+
+            // Help
+            'help.title': 'Help',
+
+            // History
+            'history.title': 'Activity History',
+            'history.subtitle': 'Your completed lessons, tests, and hackathons',
+            'history.lessons': 'Completed Lessons',
+            'history.tests': 'Test Scores',
+            'history.hackathons': 'Hackathon History',
+            'history.noLessons': 'No completed lessons yet.',
+            'history.noTests': 'No test scores yet.',
+            'history.noHackathons': 'No completed hackathons yet.',
 
             // Loading
             'loading.text': 'Loading...',
@@ -113,7 +133,7 @@ const I18n = {
 
             // AI Chat
             'ai.chatTitle': 'AI Assistant',
-            'ai.placeholder': 'Ask about this lesson...',
+            'ai.placeholder': 'Cooperate with the agent...',
             'ai.send': 'Send',
 
             // Badges
@@ -219,6 +239,8 @@ const I18n = {
             'nav.home': 'Domů',
             'nav.lessons': 'Lekce',
             'nav.badges': 'Odznaky',
+            'nav.history': 'Historie',
+            'nav.help': 'N\u00e1pov\u011bda',
             // Home
             'home.subtitle': 'Tvá interaktivní cesta programováním',
             'home.welcomeBack': 'Vítej zpět, {name}!',
@@ -232,8 +254,12 @@ const I18n = {
             'home.nav.lessonsDesc': '50 postupných lekcí s praktickým kódováním',
             'home.nav.badges': 'Obchod s odznaky',
             'home.nav.badgesDesc': 'Sbírej 50+ odznaků za získané body',
+            'home.nav.history': 'Historie aktivit',
+            'home.nav.historyDesc': 'Prohlížej a opakuj dokončené aktivity',
             'home.nav.hackathons': 'Hackathony',
             'home.nav.hackathonsDesc': 'Kreativní výzvy s AI hodnocením',
+            'home.nav.help': 'Nápověda',
+            'home.nav.helpDesc': 'Jak používat aplikaci a tipy',
             'home.nav.settings': 'Nastavení a profil',
             'home.nav.settingsDesc': 'Spravuj jazyk, profil a pokrok',
             'nav.hackathons': 'Hackathony',
@@ -248,8 +274,22 @@ const I18n = {
             'hackathons.lessonHackathons': 'Hackathony z lekcí',
             'hackathons.history': 'Dokončené hackathony',
             'hackathons.noHistory': 'Zatím žádné dokončené hackathony.',
+            'hackathons.lockedText': 'Nejdříve dokonči tuto lekci',
             'hackathon.backToList': '\u2190 Zpět na hackathony',
             'hackathon.submit': 'Odevzdat hackathon',
+
+            // Help
+            'help.title': 'Nápověda',
+
+            // History
+            'history.title': 'Historie aktivit',
+            'history.subtitle': 'Tvoje dokončené lekce, testy a hackathony',
+            'history.lessons': 'Dokončené lekce',
+            'history.tests': 'Výsledky testů',
+            'history.hackathons': 'Historie hackathonů',
+            'history.noLessons': 'Zatím žádné dokončené lekce.',
+            'history.noTests': 'Zatím žádné výsledky testů.',
+            'history.noHackathons': 'Zatím žádné dokončené hackathony.',
 
             // Loading
             'loading.text': 'Načítání...',
@@ -318,7 +358,7 @@ const I18n = {
 
             // AI Chat
             'ai.chatTitle': 'AI Asistent',
-            'ai.placeholder': 'Zeptej se na tuto lekci...',
+            'ai.placeholder': 'Spolupracuj s agentem...',
             'ai.send': 'Odeslat',
 
             // Badges
