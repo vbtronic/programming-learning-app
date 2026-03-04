@@ -578,3 +578,31 @@ const AIChat = {
         this.messages.push({ sender: 'ai', text });
     }
 };
+
+// Global functions for inline onclick handlers (independent of App object)
+function toggleAI(prefix) {
+    var body = document.getElementById(prefix + '-ai-body');
+    if (!body) return;
+    AIChat.activePrefix = prefix;
+    if (body.style.display === 'flex') {
+        body.style.display = 'none';
+        var t = body.parentElement.querySelector('.ai-chat-toggle');
+        if (t) t.innerHTML = '\u25BC';
+    } else {
+        body.style.display = 'flex';
+        body.classList.remove('hidden');
+        var t = body.parentElement.querySelector('.ai-chat-toggle');
+        if (t) t.innerHTML = '\u25B2';
+        AIChat.loadEngine();
+        var inp = document.getElementById(prefix + '-ai-input');
+        if (inp) inp.focus();
+    }
+}
+function sendAI(prefix) {
+    AIChat.activePrefix = prefix;
+    var inp = document.getElementById(prefix + '-ai-input');
+    if (!inp) return;
+    var msg = inp.value.trim();
+    if (!msg) return;
+    AIChat.sendMessage(msg);
+}

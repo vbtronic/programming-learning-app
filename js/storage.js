@@ -66,9 +66,17 @@ const Storage = {
         return this.save('profile', profile);
     },
 
-    // Get progress (with defaults)
+    // Get progress (with defaults merged for missing keys)
     getProgress() {
-        return this.load('progress') || { ...this.defaults.progress, completedLessons: [], testScores: {} };
+        const saved = this.load('progress');
+        if (!saved) return { ...this.defaults.progress, completedLessons: [], testScores: {} };
+        return {
+            currentLesson: saved.currentLesson || this.defaults.progress.currentLesson,
+            completedLessons: saved.completedLessons || [],
+            testScores: saved.testScores || {},
+            totalPoints: saved.totalPoints || 0,
+            assessmentScore: saved.assessmentScore || 0
+        };
     },
 
     // Save progress
