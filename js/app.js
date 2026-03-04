@@ -991,12 +991,12 @@ const App = {
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Hackathony</h2>' +
-                    '<p>Hackathony jsou volné programovací výzvy — žádné předepsané téma, programuj co chceš! AI ohodnotí tvůj kód podle kvality a kreativity.</p>' +
+                    '<p>Hackathony jsou volné programovací výzvy — žádné předepsané téma, programuj co chceš! Kód je ohodnocen podle kvality a kreativity.</p>' +
                     '<p>Každá 10. lekce (10, 20, 30, 40, 50) je také hackathon.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
-                    '<h2>AI Asistent</h2>' +
-                    '<p>AI asistent ti pomáhá s kódem — vidí co píšeš a může poradit. Můžeš ho zapnout/vypnout v Nastavení.</p>' +
+                    '<h2>Mapa znalostí</h2>' +
+                    '<p>U každé lekce najdeš rozklikávatelnou mapu znalostí. Obsahuje témata lekce, klíčové pojmy, tipy a ukázky kódu. Klikni na ni pro rozbalení.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Odznaky</h2>' +
@@ -1007,7 +1007,7 @@ const App = {
                     '<ul>' +
                         '<li>Pravidelně procvičuj — i 15 minut denně pomůže</li>' +
                         '<li>Neboj se experimentovat s kódem v editoru</li>' +
-                        '<li>Využij AI asistenta když si nevíš rady</li>' +
+                        '<li>Využij mapu znalostí u každé lekce pro přehled témat</li>' +
                         '<li>Opakuj starší lekce přes sekci Historie</li>' +
                     '</ul>' +
                 '</div>';
@@ -1028,12 +1028,12 @@ const App = {
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Hackathons</h2>' +
-                    '<p>Hackathons are free coding challenges — no prescribed topic, code whatever you want! AI evaluates your code based on quality and creativity.</p>' +
+                    '<p>Hackathons are free coding challenges — no prescribed topic, code whatever you want! Your code is evaluated based on quality and creativity.</p>' +
                     '<p>Every 10th lesson (10, 20, 30, 40, 50) is also a hackathon.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
-                    '<h2>AI Assistant</h2>' +
-                    '<p>The AI assistant helps with your code — it sees what you write and can advise. Toggle it on/off in Settings.</p>' +
+                    '<h2>Knowledge Map</h2>' +
+                    '<p>Each lesson has an expandable knowledge map. It contains lesson topics, key concepts, tips, and code examples. Click to expand it.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Badges</h2>' +
@@ -1044,7 +1044,7 @@ const App = {
                     '<ul>' +
                         '<li>Practice regularly — even 15 minutes a day helps</li>' +
                         '<li>Don\'t be afraid to experiment with code in the editor</li>' +
-                        '<li>Use the AI assistant when you\'re stuck</li>' +
+                        '<li>Use the knowledge map in each lesson for topic overview</li>' +
                         '<li>Repeat older lessons via the History section</li>' +
                     '</ul>' +
                 '</div>';
