@@ -75,7 +75,7 @@ var AIChat = {
         this.updateStatus(cz ? 'Načítání AI modelu na pozadí...' : 'Loading AI model in background...');
 
         try {
-            const webllm = await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/web-llm@0.2.73/+esm');
+            const webllm = await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.81/+esm');
             this.engine = await webllm.CreateMLCEngine('Llama-3.2-3B-Instruct-q4f16_1-MLC', {
                 initProgressCallback: (progress) => {
                     if (progress.text) this.updateStatus(progress.text);
