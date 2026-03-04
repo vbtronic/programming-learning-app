@@ -30,13 +30,6 @@ const AIChat = {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        // Check if AI is disabled
-        const profile = Storage.getProfile();
-        if (profile.aiDisabled) {
-            container.innerHTML = '';
-            return;
-        }
-
         // Clear other AI chat containers to avoid duplicate IDs in the DOM
         ['lesson-ai-chat-container', 'test-ai-chat-container', 'hackathon-ai-chat-container'].forEach(function(id) {
             if (id !== containerId) {

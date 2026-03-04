@@ -528,13 +528,19 @@ const App = {
         const contentEl = document.getElementById('lesson-content');
         contentEl.innerHTML = content;
 
-        // Append "What the test expects" preview
-        const test = Tests.getLessonTest(id, progLang);
-        if (test) {
+        // Append practice section based on test keywords to reinforce tested concepts
+        const test = Tests.getLessonTest(id, progLang) || (typeof TestsExtra !== 'undefined' ? TestsExtra[progLang === 'csharp' ? 'csharp' : 'python'].find(function(t) { return t.id === id; }) : null);
+        if (test && test.keywords && test.keywords.length > 0) {
             const cz = uiLang === 'cz';
-            const testDesc = test.desc[uiLang] || test.desc.en;
-            const heading = cz ? 'Co bude v testu' : 'What the test expects';
-            contentEl.innerHTML += '<div class="test-preview"><h3>' + heading + '</h3><p>' + testDesc + '</p></div>';
+            const heading = cz ? 'Procvič si' : 'Practice';
+            const intro = cz
+                ? 'Zkus si tyto koncepty v editoru, než přejdeš k testu:'
+                : 'Try these concepts in the editor before taking the test:';
+            const kwList = test.keywords.map(function(kw) { return '<code>' + kw + '</code>'; }).join(', ');
+            const hint = cz
+                ? 'V testu budeš potřebovat: ' + kwList
+                : 'In the test you will need: ' + kwList;
+            contentEl.innerHTML += '<div class="practice-section"><h3>' + heading + '</h3><p>' + intro + '</p><p>' + hint + '</p></div>';
         }
 
         // Highlight code blocks
