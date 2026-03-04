@@ -1321,9 +1321,15 @@ const App = {
         document.getElementById('settings-prog-lang').value = profile.progLang || 'python';
         document.getElementById('settings-ai-toggle').checked = !profile.aiDisabled;
 
-        // Stats
+        // Stats (include hackathon scores)
         const completedCount = progress.completedLessons.length;
         const scores = Object.values(progress.testScores);
+        const hackathonData = Storage.getHackathons();
+        if (hackathonData.history) {
+            hackathonData.history.forEach(function(h) {
+                if (h.score !== null && h.score !== undefined) scores.push(h.score);
+            });
+        }
         const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
         const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
@@ -1354,26 +1360,36 @@ const App = {
         const analysisEl = document.getElementById('dashboard-analysis');
         const totalLessons = Lessons.getTotalCount();
 
-        // Get all test scores as array of {id, score}
+        // Get all test scores as array of {id, label, score}
         const testData = [];
         for (let i = 1; i <= totalLessons; i++) {
             const key = i + '_' + profile.progLang;
             const score = progress.testScores[key];
             if (score !== undefined) {
-                testData.push({ id: i, score: score });
+                testData.push({ id: i, label: 'L' + i, score: score, type: 'lesson' });
             }
+        }
+
+        // Include hackathon scores from hackathon history
+        const hackathons = Storage.getHackathons();
+        if (hackathons.history && hackathons.history.length > 0) {
+            hackathons.history.forEach(function(h, idx) {
+                if (h.score !== null && h.score !== undefined) {
+                    testData.push({ id: 'h' + (idx + 1), label: 'H' + (idx + 1), score: h.score, type: 'hackathon' });
+                }
+            });
         }
 
         if (testData.length === 0) {
             chartEl.innerHTML = '<p class="dashboard-empty">' +
-                (cz ? 'Zatím žádné výsledky testů. Dokonči několik lekcí!' : 'No test results yet. Complete some lessons!') + '</p>';
+                (cz ? 'Zatím žádné výsledky. Dokonči několik lekcí nebo hackathonů!' : 'No results yet. Complete some lessons or hackathons!') + '</p>';
             analysisEl.innerHTML = '';
             return;
         }
 
         // Build enhanced bar chart with reference lines
         const avgScore = Math.round(testData.reduce((a, d) => a + d.score, 0) / testData.length);
-        const maxBars = Math.min(testData.length, 20);
+        const maxBars = Math.min(testData.length, 25);
         const displayData = testData.slice(-maxBars);
 
         let barsHtml = '<div class="chart-container">';
@@ -1384,10 +1400,11 @@ const App = {
         // Bars
         displayData.forEach(d => {
             const color = d.score >= 80 ? 'var(--success)' : d.score >= 50 ? 'var(--warning)' : 'var(--danger)';
-            barsHtml += '<div class="chart-bar-wrapper" title="' + (cz ? 'Lekce' : 'Lesson') + ' ' + d.id + ': ' + d.score + '%">' +
+            const tipLabel = d.type === 'hackathon' ? 'Hackathon' : (cz ? 'Lekce' : 'Lesson');
+            barsHtml += '<div class="chart-bar-wrapper" title="' + tipLabel + ' ' + d.id + ': ' + d.score + '%">' +
                 '<span class="chart-bar-value">' + d.score + '</span>' +
                 '<div class="chart-bar" style="height:' + d.score + '%;background:' + color + '"></div>' +
-                '<span class="chart-bar-label">' + d.id + '</span></div>';
+                '<span class="chart-bar-label">' + d.label + '</span></div>';
         });
         barsHtml += '</div>';
         chartEl.innerHTML = barsHtml;

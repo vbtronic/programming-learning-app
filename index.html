@@ -581,19 +581,53 @@
         </a>
     </nav>
 
+    <!-- AI toggle/send - standalone, no dependencies -->
+    <script>
+    function toggleAI(prefix) {
+        var body = document.getElementById(prefix + '-ai-body');
+        if (!body) return;
+        if (body.style.display === 'flex') {
+            body.style.display = 'none';
+            var t = body.parentElement.querySelector('.ai-chat-toggle');
+            if (t) t.textContent = '\u25BC';
+        } else {
+            body.style.display = 'flex';
+            body.classList.remove('hidden');
+            var t = body.parentElement.querySelector('.ai-chat-toggle');
+            if (t) t.textContent = '\u25B2';
+            if (typeof AIChat !== 'undefined') {
+                AIChat.activePrefix = prefix;
+                AIChat.loadEngine();
+            }
+            var inp = document.getElementById(prefix + '-ai-input');
+            if (inp) inp.focus();
+        }
+    }
+    function sendAI(prefix) {
+        var inp = document.getElementById(prefix + '-ai-input');
+        if (!inp) return;
+        var msg = inp.value.trim();
+        if (!msg) return;
+        if (typeof AIChat !== 'undefined') {
+            AIChat.activePrefix = prefix;
+            AIChat.sendMessage(msg);
+        }
+    }
+    </script>
+
     <!-- Scripts (order matters) -->
-    <script src="js/storage.js?v=11"></script>
-    <script src="js/i18n.js?v=11"></script>
-    <script src="js/badges.js?v=11"></script>
-    <script src="js/lessons.js?v=11"></script>
-    <script src="js/lessons_21_30.js?v=11"></script>
-    <script src="js/lessons_31_40.js?v=11"></script>
-    <script src="js/lessons_41_50.js?v=11"></script>
-    <script src="js/tests.js?v=11"></script>
-    <script src="js/tests_extra.js?v=11"></script>
-    <script src="js/editor.js?v=11"></script>
-    <script src="js/ai_chat.js?v=11"></script>
-    <script src="js/hackathons.js?v=11"></script>
-    <script src="js/app.js?v=11"></script>
+    <script src="js/storage.js?v=12"></script>
+    <script src="js/i18n.js?v=12"></script>
+    <script src="js/badges.js?v=12"></script>
+    <script src="js/lessons.js?v=12"></script>
+    <script src="js/lessons_21_30.js?v=12"></script>
+    <script src="js/lessons_31_40.js?v=12"></script>
+    <script src="js/lessons_41_50.js?v=12"></script>
+    <script src="js/tests.js?v=12"></script>
+    <script src="js/tests_extra.js?v=12"></script>
+    <script src="js/editor.js?v=12"></script>
+    <script src="js/ai_chat.js?v=12"></script>
+    <script src="js/hackathons.js?v=12"></script>
+    <script src="js/app.js?v=12"></script>
 </body>
 </html>
