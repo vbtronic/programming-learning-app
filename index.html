@@ -654,7 +654,7 @@
             this.showLoading(prefix);
             this.updateStatus((typeof I18n !== 'undefined' && I18n.currentLang === 'cz') ? 'Načítání AI modelu...' : 'Loading AI model...');
             import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.81/+esm').then(function(webllm) {
-                return webllm.CreateMLCEngine('Phi-3.5-mini-instruct-q4f16_1-MLC-1k', {
+                return webllm.CreateMLCEngine('Qwen2.5-3B-Instruct-q4f16_1-MLC', {
                     initProgressCallback: function(progress) {
                         if (progress.text) {
                             self.updateStatus(progress.text);
@@ -693,8 +693,14 @@
             var ctx = this.lessonContext;
             var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
             var lang = cz ? 'Czech' : 'English';
-            var p = 'You are a friendly programming tutor. Language: ' + ctx.lang + '. Topic: "' + ctx.title + '". ALWAYS answer in ' + lang + '.\n';
-            p += 'Rules: Be helpful and conversational. When writing code, use triple backtick blocks (```' + ctx.lang + '). Keep answers concise but complete.\n';
+            var p = '';
+            if (cz) {
+                p += 'Jsi přátelský tutor programování. Pomáháš studentovi učit se ' + ctx.lang + '. Aktuální téma: "' + ctx.title + '".\n';
+                p += 'PRAVIDLA:\n- VŽDY odpovídej ČESKY.\n- Piš krátce a jasně (2-4 věty, víc jen u kódu).\n- Kód piš v blocích ```' + ctx.lang + '```.\n- Odpovídej POUZE na otázky o programování a aktuálním tématu.\n- Pokud student pozdraví, odpověz přátelsky a zeptej se jak mu můžeš pomoct.\n';
+            } else {
+                p += 'You are a friendly programming tutor helping a student learn ' + ctx.lang + '. Current topic: "' + ctx.title + '".\n';
+                p += 'RULES:\n- ALWAYS answer in English.\n- Be concise (2-4 sentences, more for code).\n- Write code in ```' + ctx.lang + '``` blocks.\n- Only answer questions about programming and the current topic.\n- If the student greets you, respond friendly and ask how you can help.\n';
+            }
             // User profile
             try {
                 if (typeof Storage !== 'undefined' && Storage.getProfile) {
