@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <title>Learn Coding</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=15">
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -581,8 +583,147 @@
         </a>
     </nav>
 
-    <!-- AI toggle/send - standalone, no dependencies -->
+    <!-- AI chat core - inline to guarantee loading -->
     <script>
+    // Minimal AIChat defined here so it ALWAYS works even if ai_chat.js fails
+    var AIChat = {
+        engine: null, loading: false, ready: false, supported: false,
+        lessonContext: { title: 'Programming', content: '', lang: 'python' },
+        editorId: null, messages: [], activePrefix: null,
+        checkSupport: function() { this.supported = !!(navigator.gpu); return this.supported; },
+        init: function(title, content, lang, editorId) {
+            this.lessonContext = { title: title, content: content, lang: lang };
+            this.editorId = editorId || null; this.messages = [];
+        },
+        renderPanel: function(containerId) {
+            var prefix = containerId.replace('-ai-chat-container', '');
+            this.activePrefix = prefix;
+            try {
+                var panel = document.getElementById(prefix + '-ai-panel');
+                if (panel) {
+                    var titleEl = panel.querySelector('[data-i18n="ai.chatTitle"]');
+                    if (titleEl && typeof I18n !== 'undefined') titleEl.textContent = I18n.t('ai.chatTitle');
+                    var inputEl = document.getElementById(prefix + '-ai-input');
+                    if (inputEl && typeof I18n !== 'undefined') inputEl.placeholder = I18n.t('ai.placeholder');
+                    var sendBtn = panel.querySelector('.ai-chat-send');
+                    if (sendBtn && typeof I18n !== 'undefined') sendBtn.textContent = I18n.t('ai.send');
+                }
+            } catch (e) {}
+            var messagesEl = document.getElementById(prefix + '-ai-messages');
+            if (messagesEl) messagesEl.innerHTML = '';
+            var bodyEl = document.getElementById(prefix + '-ai-body');
+            if (bodyEl) bodyEl.style.display = 'none';
+            var panel2 = document.getElementById(prefix + '-ai-panel');
+            if (panel2) { var tog = panel2.querySelector('.ai-chat-toggle'); if (tog) tog.innerHTML = '\u25BC'; }
+        },
+        loadEngine: function() {
+            if (this.ready || this.loading) return;
+            if (!this.checkSupport()) return;
+            this.loading = true;
+            var self = this;
+            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
+            this.updateStatus(cz ? 'Načítání AI modelu...' : 'Loading AI model...');
+            import('https://cdn.jsdelivr.net/npm/@anthropic-ai/web-llm@0.2.73/+esm').then(function(webllm) {
+                return webllm.CreateMLCEngine('Llama-3.2-3B-Instruct-q4f16_1-MLC', {
+                    initProgressCallback: function(progress) { if (progress.text) self.updateStatus(progress.text); }
+                });
+            }).then(function(engine) {
+                self.engine = engine; self.ready = true; self.loading = false;
+                self.updateStatus(cz ? 'AI model připraven' : 'AI model ready');
+            }).catch(function(e) {
+                console.warn('WebLLM failed:', e);
+                self.loading = false; self.ready = false;
+                self.updateStatus(cz ? 'AI odpovídá bez modelu' : 'AI responds without model');
+            });
+        },
+        updateStatus: function(text) {
+            var el = document.getElementById((this.activePrefix || 'test') + '-ai-status');
+            if (el) el.textContent = text;
+        },
+        sendMessage: function(userMsg) {
+            if (!userMsg || !userMsg.trim()) return Promise.resolve();
+            var self = this;
+            this.addMessage('user', userMsg);
+            var input = document.getElementById((this.activePrefix || 'test') + '-ai-input');
+            if (input) input.value = '';
+            // If WebLLM ready, use it
+            if (this.ready && this.engine) {
+                this.addMessage('ai', '...', true);
+                var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
+                var ctx = this.lessonContext;
+                var prompt = 'You are a programming tutor helping learn ' + ctx.lang + '. Topic: "' + ctx.title + '". Answer in ' + (cz ? 'Czech' : 'English') + '. Keep responses short.';
+                var msgs = [{ role: 'system', content: prompt }];
+                this.messages.filter(function(m) { return m.sender; }).slice(-6).forEach(function(m) {
+                    msgs.push({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text });
+                });
+                return this.engine.chat.completions.create({ messages: msgs, max_tokens: 512, temperature: 0.7 })
+                    .then(function(response) { self.replaceLastMessage(response.choices[0].message.content); })
+                    .catch(function(e) { console.warn('WebLLM error:', e); self.replaceLastMessage(self.getFallbackResponse(userMsg)); });
+            }
+            // Fallback
+            var response = this.getFallbackResponse(userMsg);
+            this.addMessage('ai', response);
+            if (!this.ready && !this.loading) this.loadEngine();
+            return Promise.resolve();
+        },
+        getFallbackResponse: function(userMsg) {
+            var msg = userMsg.toLowerCase();
+            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
+            var ctx = this.lessonContext;
+            var isPython = ctx.lang === 'python';
+            if (/^(hi|hello|hey|ahoj|čau|zdravím)/i.test(msg)) {
+                return cz ? 'Ahoj! Jsem tvůj AI asistent pro "' + ctx.title + '". Jak ti můžu pomoct?' : 'Hi! I\'m your AI assistant for "' + ctx.title + '". How can I help?';
+            }
+            if (/help|pomoc|explain|vysvětli|jak|how/i.test(msg)) {
+                if (isPython) return (cz ? 'Téma "' + ctx.title + '":\n' : '"' + ctx.title + '":\n') + '```python\nprint("Hello, World!")\nx = 10\nif x > 5:\n    print(f"x is {x}")\n```\n' + (cz ? 'Zeptej se konkrétněji!' : 'Ask more specifically!');
+                return (cz ? 'Téma "' + ctx.title + '":\n' : '"' + ctx.title + '":\n') + '```csharp\nConsole.WriteLine("Hello, World!");\nint x = 10;\nif (x > 5) {\n    Console.WriteLine($"x is {x}");\n}\n```\n' + (cz ? 'Zeptej se konkrétněji!' : 'Ask more specifically!');
+            }
+            if (/write|napiš|code|kód|program|vytvoř|create|make|udělej/i.test(msg)) {
+                if (isPython) return (cz ? 'Příklad:\n' : 'Example:\n') + '```python\ndef main():\n    name = input("Name: ")\n    print(f"Hello, {name}!")\nmain()\n```';
+                return (cz ? 'Příklad:\n' : 'Example:\n') + '```csharp\nConsole.Write("Name: ");\nstring name = Console.ReadLine();\nConsole.WriteLine($"Hello, {name}!");\n```';
+            }
+            if (/error|chyba|bug|nefunguje|fix/i.test(msg)) {
+                return cz ? 'Zkontroluj: 1) Syntaxi, 2) Názvy proměnných, 3) Typy dat.' : 'Check: 1) Syntax, 2) Variable names, 3) Data types.';
+            }
+            if (/example|příklad|ukaz|show/i.test(msg)) {
+                if (isPython) return '```python\nfor i in range(5):\n    print(f"Number {i}: {i * i}")\n```';
+                return '```csharp\nfor (int i = 0; i < 5; i++) {\n    Console.WriteLine($"Number {i}: {i * i}");\n}\n```';
+            }
+            if (isPython) return (cz ? 'Pracujeme na "' + ctx.title + '". ' : 'Working on "' + ctx.title + '". ') + '```python\nprint("Hello!")\n```\n' + (cz ? 'Napiš mi, co potřebuješ!' : 'Tell me what you need!');
+            return (cz ? 'Pracujeme na "' + ctx.title + '". ' : 'Working on "' + ctx.title + '". ') + '```csharp\nConsole.WriteLine("Hello!");\n```\n' + (cz ? 'Napiš mi, co potřebuješ!' : 'Tell me what you need!');
+        },
+        formatMessageHTML: function(text) {
+            var codeBlockRegex = /```(?:\w*\n?)([\s\S]*?)```/g;
+            var hasCode = false;
+            var formatted = text.replace(codeBlockRegex, function(match, code) {
+                hasCode = true;
+                var escaped = code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return '<pre class="ai-code-block"><code>' + escaped + '</code></pre>';
+            });
+            if (!hasCode) return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return formatted;
+        },
+        addMessage: function(sender, text, isLoading) {
+            var messagesEl = document.getElementById((this.activePrefix || 'test') + '-ai-messages');
+            if (!messagesEl) return;
+            if (!isLoading) this.messages.push({ sender: sender, text: text });
+            var bubble = document.createElement('div');
+            bubble.className = 'ai-chat-bubble ai-chat-' + sender;
+            if (isLoading) { bubble.classList.add('ai-chat-loading'); bubble.innerHTML = '<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span>'; }
+            else if (sender === 'ai') { bubble.innerHTML = this.formatMessageHTML(text); }
+            else { bubble.textContent = text; }
+            messagesEl.appendChild(bubble);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        },
+        replaceLastMessage: function(text) {
+            var messagesEl = document.getElementById((this.activePrefix || 'test') + '-ai-messages');
+            if (!messagesEl) return;
+            var loading = messagesEl.querySelector('.ai-chat-loading');
+            if (loading) { loading.classList.remove('ai-chat-loading'); loading.innerHTML = this.formatMessageHTML(text); }
+            this.messages.push({ sender: 'ai', text: text });
+        }
+    };
+
     function toggleAI(prefix) {
         var body = document.getElementById(prefix + '-ai-body');
         if (!body) return;
@@ -609,34 +750,17 @@
             if (!inp) return;
             var msg = inp.value.trim();
             if (!msg) return;
-            var msgs = document.getElementById(prefix + '-ai-messages');
-
-            if (typeof AIChat !== 'undefined' && typeof AIChat.sendMessage === 'function') {
-                AIChat.activePrefix = prefix;
-                AIChat.sendMessage(msg).catch(function(e) {
-                    console.error('[AI]', e);
-                    if (msgs) {
-                        var eb = document.createElement('div');
-                        eb.className = 'ai-chat-bubble ai-chat-ai';
-                        eb.textContent = 'Error: ' + e.message;
-                        msgs.appendChild(eb);
-                    }
-                });
-            } else {
-                // AIChat not loaded - basic fallback
-                inp.value = '';
+            AIChat.activePrefix = prefix;
+            AIChat.sendMessage(msg).catch(function(e) {
+                console.error('[AI]', e);
+                var msgs = document.getElementById(prefix + '-ai-messages');
                 if (msgs) {
-                    var ub = document.createElement('div');
-                    ub.className = 'ai-chat-bubble ai-chat-user';
-                    ub.textContent = msg;
-                    msgs.appendChild(ub);
-                    var ab = document.createElement('div');
-                    ab.className = 'ai-chat-bubble ai-chat-ai';
-                    ab.textContent = 'AI module not loaded. Please refresh the page.';
-                    msgs.appendChild(ab);
-                    msgs.scrollTop = msgs.scrollHeight;
+                    var eb = document.createElement('div');
+                    eb.className = 'ai-chat-bubble ai-chat-ai';
+                    eb.textContent = 'Error: ' + e.message;
+                    msgs.appendChild(eb);
                 }
-            }
+            });
         } catch (e) {
             console.error('[sendAI]', e);
         }
