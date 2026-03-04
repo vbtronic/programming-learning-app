@@ -76,7 +76,7 @@ var AIChat = {
 
         try {
             const webllm = await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.81/+esm');
-            this.engine = await webllm.CreateMLCEngine('Qwen2.5-3B-Instruct-q4f16_1-MLC', {
+            this.engine = await webllm.CreateMLCEngine('Phi-3.5-mini-instruct-q4f16_1-MLC-1k', {
                 initProgressCallback: (progress) => {
                     if (progress.text) this.updateStatus(progress.text);
                 }
