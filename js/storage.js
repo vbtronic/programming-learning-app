@@ -16,7 +16,8 @@ const Storage = {
             uiLang: 'en',        // 'en' or 'cz'
             level: null,          // determined by assessment
             startLesson: 1,
-            assessmentDone: false
+            assessmentDone: false,
+            aiDisabled: false
         },
         progress: {
             currentLesson: 1,
@@ -54,9 +55,10 @@ const Storage = {
         }
     },
 
-    // Get profile (with defaults)
+    // Get profile (with defaults merged for missing keys)
     getProfile() {
-        return this.load('profile') || { ...this.defaults.profile };
+        const saved = this.load('profile');
+        return saved ? { ...this.defaults.profile, ...saved } : { ...this.defaults.profile };
     },
 
     // Save profile

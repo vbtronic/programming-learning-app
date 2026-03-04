@@ -379,8 +379,8 @@ const App = {
 
         Storage.saveProfile(profile);
 
-        // Add initial points
-        Storage.addPoints(progress.assessmentScore || 0);
+        // Add initial points (30% of assessment score to prevent inflation)
+        Storage.addPoints(Math.round((progress.assessmentScore || 0) * 0.3));
 
         location.hash = '#home';
         this.updateNav();
@@ -527,6 +527,15 @@ const App = {
         const content = Lessons.getContent(lesson, progLang, uiLang);
         const contentEl = document.getElementById('lesson-content');
         contentEl.innerHTML = content;
+
+        // Append "What the test expects" preview
+        const test = Tests.getLessonTest(id, progLang);
+        if (test) {
+            const cz = uiLang === 'cz';
+            const testDesc = test.desc[uiLang] || test.desc.en;
+            const heading = cz ? 'Co bude v testu' : 'What the test expects';
+            contentEl.innerHTML += '<div class="test-preview"><h3>' + heading + '</h3><p>' + testDesc + '</p></div>';
+        }
 
         // Highlight code blocks
         contentEl.querySelectorAll('pre code').forEach(block => {
@@ -1246,8 +1255,8 @@ const App = {
             Storage.recordTestScore(hackathon.lessonId, profile.progLang, score);
         }
 
-        // Award points
-        Storage.addPoints(score);
+        // Award points (50% of hackathon score to prevent inflation)
+        Storage.addPoints(Math.round(score * 0.5));
         this.updateNav();
 
         // Show results
@@ -1344,13 +1353,21 @@ const App = {
             return;
         }
 
-        // Build bar chart
-        let barsHtml = '<div class="chart-container">';
-        const maxBars = Math.min(testData.length, 20); // Show last 20
+        // Build enhanced bar chart with reference lines
+        const avgScore = Math.round(testData.reduce((a, d) => a + d.score, 0) / testData.length);
+        const maxBars = Math.min(testData.length, 20);
         const displayData = testData.slice(-maxBars);
+
+        let barsHtml = '<div class="chart-container">';
+        // Reference lines
+        barsHtml += '<div class="chart-ref-line" style="bottom:80%"><span class="chart-ref-label">80</span></div>';
+        barsHtml += '<div class="chart-ref-line chart-ref-pass" style="bottom:50%"><span class="chart-ref-label">50</span></div>';
+        barsHtml += '<div class="chart-avg-line" style="bottom:' + avgScore + '%"><span class="chart-avg-label">' + (cz ? 'Pr.' : 'Avg') + ' ' + avgScore + '</span></div>';
+        // Bars
         displayData.forEach(d => {
             const color = d.score >= 80 ? 'var(--success)' : d.score >= 50 ? 'var(--warning)' : 'var(--danger)';
             barsHtml += '<div class="chart-bar-wrapper" title="' + (cz ? 'Lekce' : 'Lesson') + ' ' + d.id + ': ' + d.score + '%">' +
+                '<span class="chart-bar-value">' + d.score + '</span>' +
                 '<div class="chart-bar" style="height:' + d.score + '%;background:' + color + '"></div>' +
                 '<span class="chart-bar-label">' + d.id + '</span></div>';
         });
@@ -1358,7 +1375,6 @@ const App = {
         chartEl.innerHTML = barsHtml;
 
         // Analysis: strengths and weaknesses
-        const avgScore = Math.round(testData.reduce((a, d) => a + d.score, 0) / testData.length);
         const strong = testData.filter(d => d.score >= 80).length;
         const weak = testData.filter(d => d.score < 50).length;
         const completion = Math.round((progress.completedLessons.length / totalLessons) * 100);

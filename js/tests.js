@@ -94,14 +94,14 @@ evaluate(code, output, test, progLang) {
     const maxScore = test.maxScore || 100;
     const codeStr = code.toLowerCase();
 
-    // 1. Output check (40 points)
+    // 1. Output check (50 points)
     if (test.expected) {
         const expectedNorm = test.expected.trim().toLowerCase();
         const outputNorm = (output || '').trim().toLowerCase();
         if (outputNorm === expectedNorm) {
-            score += 40;
+            score += 50;
         } else if (outputNorm.includes(expectedNorm) || expectedNorm.includes(outputNorm)) {
-            score += 20;
+            score += 25;
         } else {
             // Partial match - check line by line
             const expLines = expectedNorm.split('\n');
@@ -111,30 +111,30 @@ evaluate(code, output, test, progLang) {
                 if (outLines.some(ol => ol.trim() === el.trim())) matchedLines++;
             }
             if (expLines.length > 0) {
-                score += Math.round(40 * (matchedLines / expLines.length));
+                score += Math.round(50 * (matchedLines / expLines.length));
             }
         }
     } else {
         // No expected output - give points if there IS any output
-        if (output && output.trim().length > 0) score += 30;
+        if (output && output.trim().length > 0) score += 35;
     }
 
-    // 2. Keyword check (30 points)
+    // 2. Keyword check (35 points)
     if (test.keywords && test.keywords.length > 0) {
         let found = 0;
         for (const kw of test.keywords) {
             if (codeStr.includes(kw.toLowerCase())) found++;
         }
-        score += Math.round(30 * (found / test.keywords.length));
+        score += Math.round(35 * (found / test.keywords.length));
     }
 
-    // 3. Code quality bonus (30 points)
-    // Has meaningful code (not empty)
-    if (code.trim().length > 10) score += 10;
+    // 3. Code quality bonus (15 points - harder thresholds)
+    // Has meaningful code (not trivial)
+    if (code.trim().length > 30) score += 5;
     // Has some structure (multiple lines)
-    if (code.trim().split('\n').length >= 2) score += 10;
+    if (code.trim().split('\n').length >= 3) score += 5;
     // No syntax errors (code ran without error)
-    if (output !== undefined && output !== null) score += 10;
+    if (output !== undefined && output !== null) score += 5;
 
     return Math.min(Math.round(score), maxScore);
 },

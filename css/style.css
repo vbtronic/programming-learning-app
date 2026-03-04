@@ -1197,17 +1197,22 @@ body {
     -webkit-font-variant-ligatures: none;
 }
 
-.lesson-content .tip {
-    background: var(--accent-light);
-    border-left: 4px solid var(--accent);
+.test-preview {
+    background: rgba(99, 102, 241, 0.08);
+    border-left: 4px solid var(--primary);
     padding: 16px 20px;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    margin: 24px 0;
+    margin: 32px 0 16px;
 }
-
-.lesson-content .tip p {
-    color: var(--text-primary);
+.test-preview h3 {
+    margin: 0 0 8px;
+    color: var(--primary);
+    font-size: 1rem;
+}
+.test-preview p {
     margin: 0;
+    color: var(--text-primary);
+    line-height: 1.6;
 }
 
 .lesson-content .warning {
@@ -1707,9 +1712,47 @@ body {
     display: flex;
     align-items: flex-end;
     gap: 4px;
-    height: 120px;
-    padding: 8px 0;
+    height: 200px;
+    padding: 8px 24px 8px 0;
     border-bottom: 2px solid var(--border);
+    position: relative;
+}
+.chart-ref-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed var(--text-muted);
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 1;
+}
+.chart-ref-pass {
+    border-top-color: var(--warning);
+    opacity: 0.5;
+}
+.chart-ref-label {
+    position: absolute;
+    right: -22px;
+    top: -8px;
+    font-size: 0.55rem;
+    color: var(--text-muted);
+}
+.chart-avg-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 2px solid var(--primary);
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 1;
+}
+.chart-avg-label {
+    position: absolute;
+    right: -22px;
+    top: -8px;
+    font-size: 0.55rem;
+    color: var(--primary);
+    font-weight: 700;
 }
 .chart-bar-wrapper {
     flex: 1;
@@ -1719,13 +1762,27 @@ body {
     height: 100%;
     justify-content: flex-end;
     min-width: 0;
+    z-index: 2;
+}
+.chart-bar-value {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 2px;
 }
 .chart-bar {
     width: 100%;
     max-width: 28px;
     min-height: 4px;
     border-radius: 3px 3px 0 0;
-    transition: height 0.3s;
+    transition: height 0.4s ease-out, transform 0.2s;
+}
+.chart-bar-wrapper:hover .chart-bar {
+    transform: scaleX(1.2);
+    filter: brightness(1.15);
+}
+.chart-bar-wrapper:hover .chart-bar-value {
+    color: var(--text-primary);
 }
 .chart-bar-label {
     font-size: 0.65rem;

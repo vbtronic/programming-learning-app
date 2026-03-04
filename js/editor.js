@@ -226,15 +226,24 @@ sys.stderr = StringIO()
 ${inputSetup}
             `);
 
+            let lastExprValue = undefined;
             try {
-                pyodide.runPython(code);
+                lastExprValue = pyodide.runPython(code);
             } catch (pyErr) {
                 const stderr = pyodide.runPython('sys.stderr.getvalue()');
                 return { output: '', error: stderr || pyErr.message, success: false };
             }
 
-            const stdout = pyodide.runPython('sys.stdout.getvalue()');
+            let stdout = pyodide.runPython('sys.stdout.getvalue()');
             const stderr = pyodide.runPython('sys.stderr.getvalue()');
+
+            // REPL-like: if no stdout, show last expression value
+            if (!stdout.trim() && lastExprValue !== undefined && lastExprValue !== null) {
+                const reprVal = String(lastExprValue);
+                if (reprVal && reprVal !== 'undefined' && reprVal !== 'None') {
+                    stdout = reprVal + '\n';
+                }
+            }
 
             // Reset stdout/stderr
             pyodide.runPython(`
