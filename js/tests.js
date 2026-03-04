@@ -181,13 +181,15 @@ mergeExtras() {
 },
 
 // Determine level from assessment total score (calibrated for 50 lessons)
+// 10 tasks × max 100 pts = 1000 max. Thresholds set conservatively so users
+// don't skip too many lessons — it's better to review easy material than miss fundamentals.
 determineLevel(totalScore) {
-    if (totalScore <= 50) return { level: 'complete_beginner', startLesson: 1 };
-    if (totalScore <= 150) return { level: 'beginner', startLesson: 5 };
-    if (totalScore <= 300) return { level: 'elementary', startLesson: 11 };
-    if (totalScore <= 450) return { level: 'intermediate', startLesson: 21 };
-    if (totalScore <= 600) return { level: 'upper_intermediate', startLesson: 31 };
-    if (totalScore <= 750) return { level: 'advanced', startLesson: 40 };
-    return { level: 'senior', startLesson: 46 };
+    if (totalScore <= 100) return { level: 'complete_beginner', startLesson: 1 };
+    if (totalScore <= 250) return { level: 'beginner', startLesson: 3 };
+    if (totalScore <= 450) return { level: 'elementary', startLesson: 6 };
+    if (totalScore <= 650) return { level: 'intermediate', startLesson: 11 };
+    if (totalScore <= 800) return { level: 'upper_intermediate', startLesson: 21 };
+    if (totalScore <= 900) return { level: 'advanced', startLesson: 31 };
+    return { level: 'senior', startLesson: 41 };
 }
 };

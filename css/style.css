@@ -3,15 +3,35 @@
    Modern Responsive CSS
    ============================ */
 
-/* Prevent text cursor on non-interactive elements */
-h1, h2, h3, h4, h5, h6, p, span, label, li {
+/* Prevent text cursor on all non-interactive elements */
+*, *::before, *::after {
     cursor: default;
 }
-a, button, [onclick] {
+/* Force default cursor on common text elements that browsers may override */
+h1, h2, h3, h4, h5, h6, p, span, div, section, article, header, footer,
+nav, main, aside, ul, ol, li, pre, code, blockquote, label, legend,
+figure, figcaption, details, summary, table, tr, td, th, caption,
+.page, .container, .card, .lesson-card, .hackathon-card, .badge-card {
+    cursor: default;
+}
+a, button, [onclick], [role="button"], select,
+input[type="checkbox"], input[type="radio"],
+.lesson-card:not(.locked), .hackathon-card:not(.locked), .badge-card {
     cursor: pointer;
 }
-input[type="text"], input[type="password"], input[type="email"], input[type="number"], textarea {
+input[type="text"], input[type="password"], input[type="email"],
+input[type="number"], input[type="search"], textarea {
     cursor: text;
+}
+.ace_editor, .ace_editor * {
+    cursor: text !important;
+}
+.output-content, .output-content * {
+    cursor: default !important;
+    user-select: text;
+}
+.ai-chat-header {
+    cursor: pointer !important;
 }
 
 /* CSS Custom Properties - Dark Theme (default) */

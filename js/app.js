@@ -431,6 +431,7 @@ const App = {
         const progress = Storage.getProgress();
         const progLang = profile.progLang;
         const uiLang = profile.uiLang || 'en';
+        const cz = uiLang === 'cz';
         const total = Lessons.getTotalCount();
 
         // Personalized greeting
@@ -454,13 +455,18 @@ const App = {
         grid.innerHTML = '';
 
         for (const lesson of Lessons.list) {
-            const title = Lessons.getTitle(lesson, progLang, uiLang);
-            const desc = Lessons.getDescription(lesson, progLang, uiLang);
+            const isHackathon = lesson.hackathon === true;
+            // Hackathon lessons: show generic title/desc instead of topic
+            const title = isHackathon
+                ? ('Hackathon #' + lesson.id)
+                : Lessons.getTitle(lesson, progLang, uiLang);
+            const desc = isHackathon
+                ? (cz ? 'Volné programování — ukaž své dovednosti!' : 'Free coding — show your skills!')
+                : Lessons.getDescription(lesson, progLang, uiLang);
             const isCompleted = Storage.isLessonCompleted(lesson.id, progLang);
             const isLocked = lesson.id > progress.currentLesson && !isCompleted;
             const testScore = Storage.getTestScore(lesson.id, progLang);
 
-            const isHackathon = lesson.hackathon === true;
             let classes = 'lesson-card';
             if (isCompleted) classes += ' completed';
             if (isLocked) classes += ' locked';
@@ -505,6 +511,12 @@ const App = {
         const lesson = Lessons.getLesson(id);
         if (!lesson) { location.hash = '#lessons'; return; }
 
+        // Hackathon lessons → show as free hackathon (no tips, no topic)
+        if (lesson.hackathon) {
+            this.showHackathonLesson(id, lesson);
+            return;
+        }
+
         this.showPage('lesson');
         const profile = Storage.getProfile();
         const progLang = profile.progLang;
@@ -526,10 +538,76 @@ const App = {
             location.hash = '#test/' + id;
         };
 
-        // Initialize AI chat with lesson context
+        // Initialize AI chat with full lesson context
         const title = lesson.title[progLang][uiLang] || lesson.title[progLang].en;
-        AIChat.init(title, '', progLang, null);
+        AIChat.init(title, content, progLang, null);
         AIChat.renderPanel('lesson-ai-chat-container');
+    },
+
+    // Show hackathon-type lesson as free coding (no tips, no topic)
+    showHackathonLesson(id, lesson) {
+        this.showPage('hackathon');
+        const profile = Storage.getProfile();
+        const progLang = profile.progLang;
+        const uiLang = profile.uiLang || 'en';
+        const cz = uiLang === 'cz';
+
+        // Generic hackathon title and description (no topic)
+        const challengeEl = document.getElementById('hackathon-challenge');
+        var title = 'Hackathon #' + id;
+        var desc = cz
+            ? '<p>Toto je <strong>hackathon</strong> \u2014 voln\u00e9 programov\u00e1n\u00ed. Napi\u0161 jak\u00fdkoli program a uka\u017e sv\u00e9 dovednosti!</p><ul><li>Pou\u017eij funkce, t\u0159\u00eddy a \u010dist\u00fd k\u00f3d pro vy\u0161\u0161\u00ed sk\u00f3re</li><li>P\u0159idej koment\u00e1\u0159e a o\u0161et\u0159en\u00ed chyb pro bonusov\u00e9 body</li></ul>'
+            : '<p>This is a <strong>hackathon</strong> \u2014 free coding. Write any program and show your skills!</p><ul><li>Use functions, classes, and clean code for a higher score</li><li>Add comments and error handling for bonus points</li></ul>';
+        challengeEl.innerHTML = '<h1>' + title + '</h1><div class="hackathon-desc">' + desc + '</div>';
+
+        // Editor with blank starter
+        var starter = progLang === 'python'
+            ? '# Hackathon #' + id + '\n# Write your code here!\n\n'
+            : '// Hackathon #' + id + '\n// Write your code here!\n\nusing System;\n\nclass Program {\n    static void Main() {\n        \n    }\n}\n';
+        CodeEditor.destroy('hackathon-editor');
+        CodeEditor.create('hackathon-editor', { lang: progLang, value: starter });
+
+        // Clear output/results
+        document.getElementById('hackathon-output-content').textContent = '';
+        document.getElementById('hackathon-results').classList.add('hidden');
+        var controls = document.querySelector('#page-hackathon .editor-controls');
+        if (controls) controls.classList.remove('hidden');
+
+        // Create a temporary hackathon object so submit works
+        var hackathons = Storage.getHackathons();
+        if (!hackathons.active || hackathons.active.lessonId !== id) {
+            hackathons.active = {
+                id: hackathons.nextId,
+                type: 'lesson',
+                lessonId: id,
+                title: { en: 'Hackathon #' + id, cz: 'Hackathon #' + id },
+                description: { en: 'Free coding challenge', cz: 'Voln\u00e1 programovac\u00ed v\u00fdzva' },
+                challenge: { en: desc, cz: desc },
+                starter: starter,
+                keywords: [],
+                maxScore: 100,
+                createdAt: new Date().toISOString(),
+                completedAt: null,
+                score: null,
+                code: null,
+                output: null,
+                aiCommentary: null
+            };
+            hackathons.nextId++;
+            Storage.saveHackathons(hackathons);
+        } else {
+            // Resume existing lesson hackathon
+            starter = hackathons.active.code || starter;
+            CodeEditor.setCode('hackathon-editor', starter);
+        }
+
+        // Back button → lessons
+        var backBtn = document.querySelector('#page-hackathon .btn-back');
+        if (backBtn) backBtn.href = '#lessons';
+
+        // AI Chat
+        AIChat.init(title, '', progLang, 'hackathon-editor');
+        AIChat.renderPanel('hackathon-ai-chat-container');
     },
 
     // Toggle AI chat panel
@@ -586,8 +664,8 @@ const App = {
         document.getElementById('test-results').classList.add('hidden');
         document.querySelector('#page-test .editor-controls').classList.remove('hidden');
 
-        // Initialize AI chat with test context (can see user's code)
-        AIChat.init(title, '', progLang, 'test-editor');
+        // Initialize AI chat with full test context (can see user's code)
+        AIChat.init(title, desc, progLang, 'test-editor');
         AIChat.renderPanel('test-ai-chat-container');
     },
 
@@ -1077,6 +1155,12 @@ const App = {
 
         if (!hackathon) { location.hash = '#hackathons'; return; }
 
+        // Back button → lessons for lesson hackathons, hackathons for regular
+        var backBtn = document.querySelector('#page-hackathon .btn-back');
+        if (backBtn) {
+            backBtn.href = hackathon.lessonId ? '#lessons' : '#hackathons';
+        }
+
         // Render challenge
         const challengeEl = document.getElementById('hackathon-challenge');
         const title = hackathon.title[uiLang] || hackathon.title.en;
@@ -1129,8 +1213,10 @@ const App = {
         const hackathon = hackathons.active;
         if (!hackathon) return;
 
-        // Block empty submissions
-        if (!code.trim()) {
+        // Block empty submissions or starter-only code
+        const trimmedCode = code.trim();
+        const starterTrimmed = (hackathon.starter || '').trim();
+        if (!trimmedCode || trimmedCode === starterTrimmed) {
             this.showToast(I18n.t('test.emptyCode'), 'error');
             return;
         }
@@ -1166,6 +1252,11 @@ const App = {
         hackathons.history.push(hackathon);
         hackathons.active = null;
         Storage.saveHackathons(hackathons);
+
+        // For lesson-based hackathons, record test score to unlock next lesson
+        if (hackathon.lessonId) {
+            Storage.recordTestScore(hackathon.lessonId, profile.progLang, score);
+        }
 
         // Award points
         Storage.addPoints(score);

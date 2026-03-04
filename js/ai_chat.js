@@ -37,6 +37,14 @@ const AIChat = {
             return;
         }
 
+        // Clear other AI chat containers to avoid duplicate IDs in the DOM
+        ['lesson-ai-chat-container', 'test-ai-chat-container', 'hackathon-ai-chat-container'].forEach(function(id) {
+            if (id !== containerId) {
+                var el = document.getElementById(id);
+                if (el) el.innerHTML = '';
+            }
+        });
+
         container.innerHTML =
             '<div class="ai-chat-panel" id="ai-chat-panel">' +
                 '<div class="ai-chat-header" onclick="App.toggleAIChat()">' +
@@ -144,7 +152,15 @@ const AIChat = {
     buildSystemPrompt() {
         const ctx = this.lessonContext;
         const lang = I18n.currentLang === 'cz' ? 'Czech' : 'English';
-        let prompt = 'You are a collaborative programming agent. You work together with the student on "' + ctx.title + '" in ' + ctx.lang + '. Answer in ' + lang + '. Keep responses short (2-3 sentences). Use code examples when helpful. Help improve their code, suggest ideas, and collaborate on solutions.';
+        let prompt = 'You are a collaborative programming assistant. You work together with the student on "' + ctx.title + '" in ' + ctx.lang + '. Answer in ' + lang + '. Keep responses short (2-3 sentences). Always wrap code examples in triple backtick code blocks (```' + ctx.lang + ' ... ```). Help improve their code, suggest ideas, and collaborate on solutions.';
+
+        // Include lesson/test content if available
+        if (ctx.content && ctx.content.length > 0) {
+            // Strip HTML tags for plain text context, truncate to 800 chars
+            var plainContent = ctx.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (plainContent.length > 800) plainContent = plainContent.substring(0, 800) + '...';
+            prompt += '\n\nLesson/task content: ' + plainContent;
+        }
 
         // Include current editor code if available
         if (this.editorId && typeof CodeEditor !== 'undefined') {
@@ -160,11 +176,12 @@ const AIChat = {
         return prompt;
     },
 
-    // Fallback: keyword-based responses
+    // Fallback: keyword-based responses with code blocks for editor insertion
     getFallbackResponse(userMsg) {
         const msg = userMsg.toLowerCase();
         const cz = I18n.currentLang === 'cz';
         const ctx = this.lessonContext;
+        const isPython = ctx.lang === 'python';
 
         // Get user code for context-aware fallback
         let userCode = '';
@@ -179,66 +196,160 @@ const AIChat = {
                 : 'Hi! I\'m your AI assistant. Let\'s collaborate on "' + ctx.title + '" \u2014 how can I help?';
         }
 
-        // Code review request
+        // Code review request — return improved code in code block
         if (/review|zkontroluj|check.*code|pod\u00edvej.*k\u00f3d/i.test(msg) && userCode.trim()) {
-            const lines = userCode.trim().split('\n').length;
-            const hasFunctions = /def |function |class /i.test(userCode);
-            const hasComments = /#|\/\//.test(userCode);
+            var lines = userCode.trim().split('\n').length;
+            var hasFunctions = /def |function |class /i.test(userCode);
+            var hasComments = /#|\/\//.test(userCode);
+            var feedback = '';
             if (cz) {
-                let resp = 'Tv\u016fj k\u00f3d m\u00e1 ' + lines + ' \u0159\u00e1dk\u016f. ';
-                resp += hasFunctions ? 'Pou\u017e\u00edv\u00e1\u0161 funkce/t\u0159\u00eddy - to je dob\u0159e! ' : 'Zkus rozd\u011blit k\u00f3d do funkc\u00ed. ';
-                resp += hasComments ? 'M\u00e1\u0161 koment\u00e1\u0159e.' : 'P\u0159idej koment\u00e1\u0159e pro lep\u0161\u00ed \u010ditelnost.';
-                return resp;
+                feedback = 'Tv\u016fj k\u00f3d m\u00e1 ' + lines + ' \u0159\u00e1dk\u016f. ';
+                feedback += hasFunctions ? 'Pou\u017e\u00edv\u00e1\u0161 funkce - dob\u0159e! ' : 'Zkus rozd\u011blit k\u00f3d do funkc\u00ed. ';
+                feedback += hasComments ? '' : 'P\u0159idej koment\u00e1\u0159e. ';
+                feedback += 'Zde je vylep\u0161en\u00e1 verze:\n';
             } else {
-                let resp = 'Your code has ' + lines + ' lines. ';
-                resp += hasFunctions ? 'You use functions/classes - good! ' : 'Try splitting code into functions. ';
-                resp += hasComments ? 'Has comments.' : 'Add comments for better readability.';
-                return resp;
+                feedback = 'Your code has ' + lines + ' lines. ';
+                feedback += hasFunctions ? 'Uses functions - good! ' : 'Try splitting into functions. ';
+                feedback += hasComments ? '' : 'Add comments. ';
+                feedback += 'Here\'s an improved version:\n';
+            }
+            // Add commented version of their code
+            var commented = userCode.trim().split('\n').slice(0, 15).join('\n');
+            if (!hasComments) {
+                if (isPython) {
+                    commented = '# ' + (cz ? 'Vylep\u0161en\u00fd k\u00f3d s koment\u00e1\u0159i' : 'Improved code with comments') + '\n' + commented;
+                } else {
+                    commented = '// ' + (cz ? 'Vylep\u0161en\u00fd k\u00f3d s koment\u00e1\u0159i' : 'Improved code with comments') + '\n' + commented;
+                }
+            }
+            return feedback + '```' + ctx.lang + '\n' + commented + '\n```';
+        }
+
+        // Write/code/program request — generate example code
+        if (/write|napi\u0161|code|k\u00f3d|program|vytvo\u0159|create|make|ud\u011blej/i.test(msg)) {
+            if (isPython) {
+                return (cz ? 'Zde je p\u0159\u00edklad k\u00f3du:\n' : 'Here\'s a code example:\n') +
+                    '```python\n' +
+                    '# ' + (cz ? 'P\u0159\u00edklad programu' : 'Example program') + '\n' +
+                    'def main():\n' +
+                    '    name = input("' + (cz ? 'Zadej jm\u00e9no: ' : 'Enter name: ') + '")\n' +
+                    '    print(f"' + (cz ? 'Ahoj, {name}!' : 'Hello, {name}!') + '")\n' +
+                    '    \n' +
+                    '    numbers = [1, 2, 3, 4, 5]\n' +
+                    '    total = sum(numbers)\n' +
+                    '    print(f"' + (cz ? 'Sou\u010det: {total}' : 'Sum: {total}') + '")\n\n' +
+                    'main()\n' +
+                    '```\n' +
+                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru a upravit!' : 'You can insert it into the editor and modify it!');
+            } else {
+                return (cz ? 'Zde je p\u0159\u00edklad k\u00f3du:\n' : 'Here\'s a code example:\n') +
+                    '```csharp\n' +
+                    '// ' + (cz ? 'P\u0159\u00edklad programu' : 'Example program') + '\n' +
+                    'Console.Write("' + (cz ? 'Zadej jm\u00e9no: ' : 'Enter name: ') + '");\n' +
+                    'string name = Console.ReadLine();\n' +
+                    'Console.WriteLine($"' + (cz ? 'Ahoj, {name}!' : 'Hello, {name}!') + '");\n\n' +
+                    'int[] numbers = {1, 2, 3, 4, 5};\n' +
+                    'int total = numbers.Sum();\n' +
+                    'Console.WriteLine($"' + (cz ? 'Sou\u010det: {total}' : 'Sum: {total}') + '");\n' +
+                    '```\n' +
+                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru a upravit!' : 'You can insert it into the editor and modify it!');
             }
         }
 
-        // Help / explain
+        // Help / explain — include a short code example
         if (/help|pomoc|explain|vysv\u011btli|jak|how/i.test(msg)) {
-            return cz
-                ? 'Tato lekce se zab\u00fdv\u00e1 t\u00e9matem "' + ctx.title + '". Zkus si proj\u00edt p\u0159\u00edklady k\u00f3du a experimentovat s nimi. Pokud n\u011b\u010demu nerozum\u00ed\u0161, zeptej se konkr\u00e9tn\u011bji!'
-                : 'This lesson covers "' + ctx.title + '". Try the code examples and experiment. If you need specific help, ask me!';
+            if (isPython) {
+                return (cz
+                    ? 'Toto t\u00e9ma se t\u00fdk\u00e1 "' + ctx.title + '". Zde je z\u00e1kladn\u00ed p\u0159\u00edklad:\n'
+                    : 'This topic covers "' + ctx.title + '". Here\'s a basic example:\n') +
+                    '```python\n' +
+                    '# ' + ctx.title + '\n' +
+                    'print("Hello, World!")\n\n' +
+                    'x = 10\n' +
+                    'if x > 5:\n' +
+                    '    print(f"x is {x}")\n' +
+                    '```\n' +
+                    (cz ? 'Zeptej se konkr\u00e9tn\u011bji pro podrobn\u011bj\u0161\u00ed pomoc!' : 'Ask more specifically for detailed help!');
+            } else {
+                return (cz
+                    ? 'Toto t\u00e9ma se t\u00fdk\u00e1 "' + ctx.title + '". Zde je z\u00e1kladn\u00ed p\u0159\u00edklad:\n'
+                    : 'This topic covers "' + ctx.title + '". Here\'s a basic example:\n') +
+                    '```csharp\n' +
+                    '// ' + ctx.title + '\n' +
+                    'Console.WriteLine("Hello, World!");\n\n' +
+                    'int x = 10;\n' +
+                    'if (x > 5) {\n' +
+                    '    Console.WriteLine($"x is {x}");\n' +
+                    '}\n' +
+                    '```\n' +
+                    (cz ? 'Zeptej se konkr\u00e9tn\u011bji pro podrobn\u011bj\u0161\u00ed pomoc!' : 'Ask more specifically for detailed help!');
+            }
         }
 
-        // Error / bug
+        // Error / bug — suggest fix with code block
         if (/error|chyba|bug|nefunguje|doesn.t work|fix/i.test(msg)) {
             if (userCode.trim()) {
-                // Code-aware error help
-                const hasIndent = /    |\t/.test(userCode);
-                const hasSyntaxIssue = /\(\s*$|{\s*$/m.test(userCode);
-                if (cz) {
-                    let resp = 'Pod\u00edv\u00e1m se na tv\u016fj k\u00f3d. ';
-                    resp += !hasIndent ? 'Zkontroluj odsazen\u00ed - to je v Pythonu kl\u00ed\u010dov\u00e9. ' : '';
-                    resp += hasSyntaxIssue ? 'Vypad\u00e1 to na neuzav\u0159enou z\u00e1vorku. ' : '';
-                    resp += 'Zkus spustit k\u00f3d a po\u0161li mi chybovou hl\u00e1\u0161ku.';
-                    return resp;
+                var codeLines = userCode.trim().split('\n');
+                if (isPython) {
+                    return (cz ? 'Pod\u00edv\u00e1m se na tv\u016fj k\u00f3d. Zkus toto:\n' : 'Looking at your code. Try this:\n') +
+                        '```python\n' +
+                        'try:\n' +
+                        '    ' + (codeLines[0] || 'pass') + '\n' +
+                        (codeLines.length > 1 ? '    ' + codeLines[1] + '\n' : '') +
+                        'except Exception as e:\n' +
+                        '    print(f"Error: {e}")\n' +
+                        '```\n' +
+                        (cz ? 'P\u0159idej try/except pro lep\u0161\u00ed o\u0161et\u0159en\u00ed chyb.' : 'Add try/except for better error handling.');
                 } else {
-                    let resp = 'Looking at your code. ';
-                    resp += !hasIndent ? 'Check indentation - crucial in Python. ' : '';
-                    resp += hasSyntaxIssue ? 'Looks like an unclosed bracket. ' : '';
-                    resp += 'Try running the code and share the error message.';
-                    return resp;
+                    return (cz ? 'Pod\u00edv\u00e1m se na tv\u016fj k\u00f3d. Zkus toto:\n' : 'Looking at your code. Try this:\n') +
+                        '```csharp\n' +
+                        'try {\n' +
+                        '    ' + (codeLines[0] || '') + '\n' +
+                        (codeLines.length > 1 ? '    ' + codeLines[1] + '\n' : '') +
+                        '} catch (Exception e) {\n' +
+                        '    Console.WriteLine($"Error: {e.Message}");\n' +
+                        '}\n' +
+                        '```\n' +
+                        (cz ? 'P\u0159idej try/catch pro lep\u0161\u00ed o\u0161et\u0159en\u00ed chyb.' : 'Add try/catch for better error handling.');
                 }
             }
             return cz
-                ? 'Zkontroluj si: 1) Spr\u00e1vnou syntaxi, 2) N\u00e1zvy prom\u011bnn\u00fdch, 3) Typy dat. Zkop\u00edruj sem chybovou hl\u00e1\u0161ku.'
-                : 'Check: 1) Syntax, 2) Variable names (case-sensitive), 3) Data types. Share the error message.';
+                ? 'Zkontroluj si: 1) Spr\u00e1vnou syntaxi, 2) N\u00e1zvy prom\u011bnn\u00fdch, 3) Typy dat.'
+                : 'Check: 1) Syntax, 2) Variable names (case-sensitive), 3) Data types.';
         }
 
-        // Example
+        // Example — return code example in code block
         if (/example|p\u0159\u00edklad|ukaz|show|sample/i.test(msg)) {
-            return cz
-                ? 'Pod\u00edvej se na p\u0159\u00edklady k\u00f3du v lekci v\u00fd\u0161e. M\u016f\u017ee\u0161 je zkop\u00edrovat do editoru a experimentovat.'
-                : 'Check the code examples in the lesson above. You can copy them to the editor and experiment.';
+            if (isPython) {
+                return (cz ? 'Zde je p\u0159\u00edklad:\n' : 'Here\'s an example:\n') +
+                    '```python\n' +
+                    '# ' + ctx.title + '\n' +
+                    'for i in range(5):\n' +
+                    '    print(f"' + (cz ? '\u010c\u00edslo' : 'Number') + ' {i}: {i * i}")\n\n' +
+                    'data = ["a", "b", "c"]\n' +
+                    'for item in data:\n' +
+                    '    print(item.upper())\n' +
+                    '```\n' +
+                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru tla\u010d\u00edtkem n\u00ed\u017ee!' : 'You can insert it into the editor with the button below!');
+            } else {
+                return (cz ? 'Zde je p\u0159\u00edklad:\n' : 'Here\'s an example:\n') +
+                    '```csharp\n' +
+                    '// ' + ctx.title + '\n' +
+                    'for (int i = 0; i < 5; i++) {\n' +
+                    '    Console.WriteLine($"' + (cz ? '\u010c\u00edslo' : 'Number') + ' {i}: {i * i}");\n' +
+                    '}\n\n' +
+                    'string[] data = {"a", "b", "c"};\n' +
+                    'foreach (string item in data) {\n' +
+                    '    Console.WriteLine(item.ToUpper());\n' +
+                    '}\n' +
+                    '```\n' +
+                    (cz ? 'M\u016f\u017ee\u0161 ho vlo\u017eit do editoru tla\u010d\u00edtkem n\u00ed\u017ee!' : 'You can insert it into the editor with the button below!');
+            }
         }
 
         // Tip
         if (/tip|rada|advice|suggest|doporu\u010d/i.test(msg)) {
-            const tips = cz ? [
+            var tips = cz ? [
                 'Pi\u0161 k\u00f3d po mal\u00fdch kroc\u00edch a testuj po ka\u017ed\u00e9 zm\u011bn\u011b.',
                 '\u010cti chybov\u00e9 hl\u00e1\u0161ky pozorn\u011b - v\u011bt\u0161inou ti p\u0159esn\u011b \u0159eknou, co je \u0161patn\u011b.',
                 'Neboj se experimentovat - nejlep\u0161\u00ed zp\u016fsob u\u010den\u00ed je praxe!',
@@ -252,10 +363,24 @@ const AIChat = {
             return tips[Math.floor(Math.random() * tips.length)];
         }
 
-        // Default
-        return cz
-            ? 'Dobr\u00e1 ot\u00e1zka! T\u00e9ma "' + ctx.title + '" je d\u016fle\u017eit\u00e9. Projdi si lekci a zkus p\u0159\u00edklady. Pokud pot\u0159ebuje\u0161 konkr\u00e9tn\u00ed pomoc, napi\u0161 mi podrobn\u011bji.'
-            : 'Good question! The topic "' + ctx.title + '" is important. Review the lesson and try the examples. Tell me more about what you need.';
+        // Default — include a small code example
+        if (isPython) {
+            return (cz
+                ? 'T\u00e9ma "' + ctx.title + '" je d\u016fle\u017eit\u00e9. Zde je mal\u00fd p\u0159\u00edklad:\n'
+                : 'The topic "' + ctx.title + '" is important. Here\'s a small example:\n') +
+                '```python\n' +
+                'print("Hello!")\nx = 42\nprint(f"Answer: {x}")\n' +
+                '```\n' +
+                (cz ? 'Napi\u0161 mi v\u00edce o tom, co pot\u0159ebuje\u0161!' : 'Tell me more about what you need!');
+        } else {
+            return (cz
+                ? 'T\u00e9ma "' + ctx.title + '" je d\u016fle\u017eit\u00e9. Zde je mal\u00fd p\u0159\u00edklad:\n'
+                : 'The topic "' + ctx.title + '" is important. Here\'s a small example:\n') +
+                '```csharp\n' +
+                'Console.WriteLine("Hello!");\nint x = 42;\nConsole.WriteLine($"Answer: {x}");\n' +
+                '```\n' +
+                (cz ? 'Napi\u0161 mi v\u00edce o tom, co pot\u0159ebuje\u0161!' : 'Tell me more about what you need!');
+        }
     },
 
     // Format AI message HTML - detect code blocks and add insert buttons
