@@ -8,7 +8,7 @@ const AIChat = {
     loading: false,
     ready: false,
     supported: false,
-    lessonContext: null,
+    lessonContext: { title: 'Programming', content: '', lang: 'python' },
     editorId: null,
     messages: [],
 
@@ -51,9 +51,19 @@ const AIChat = {
         var messagesEl = document.getElementById(prefix + '-ai-messages');
         if (messagesEl) messagesEl.innerHTML = '';
 
-        // Collapse the body
+        // Collapse the body (use inline style to override !important in .hidden)
         var bodyEl = document.getElementById(prefix + '-ai-body');
-        if (bodyEl) bodyEl.classList.add('hidden');
+        if (bodyEl) {
+            bodyEl.style.display = 'none';
+            bodyEl.classList.add('hidden');
+        }
+
+        // Reset toggle arrow
+        var panel = document.getElementById(prefix + '-ai-panel');
+        if (panel) {
+            var toggleEl = panel.querySelector('.ai-chat-toggle');
+            if (toggleEl) toggleEl.innerHTML = '&#x25BC;';
+        }
     },
 
     // Load WebLLM engine (lazy)

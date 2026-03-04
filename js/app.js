@@ -624,16 +624,22 @@ const App = {
     toggleAIChat(prefix) {
         if (!prefix) prefix = AIChat.activePrefix || 'test';
         AIChat.activePrefix = prefix;
-        const body = document.getElementById(prefix + '-ai-body');
-        const toggle = body ? body.parentElement.querySelector('.ai-chat-toggle') : null;
-        if (!body) return;
+        var body = document.getElementById(prefix + '-ai-body');
+        if (!body) {
+            console.error('[AI] body not found:', prefix + '-ai-body');
+            return;
+        }
+        var toggle = body.parentElement.querySelector('.ai-chat-toggle');
 
-        const isHidden = body.classList.contains('hidden');
-        body.classList.toggle('hidden');
-        if (toggle) toggle.innerHTML = isHidden ? '&#x25B2;' : '&#x25BC;';
-
-        if (isHidden) {
-            // Try loading engine on first open
+        if (body.style.display === 'flex') {
+            // Hide
+            body.style.display = 'none';
+            if (toggle) toggle.innerHTML = '&#x25BC;';
+        } else {
+            // Show
+            body.style.display = 'flex';
+            body.classList.remove('hidden');
+            if (toggle) toggle.innerHTML = '&#x25B2;';
             AIChat.loadEngine();
             var inputEl = document.getElementById(prefix + '-ai-input');
             if (inputEl) inputEl.focus();
