@@ -545,6 +545,17 @@ const App = {
             }
         } catch (e) { console.warn('Practice section error:', e); }
 
+        // Add "What the test expects" section
+        try {
+            const test = Tests.getLessonTest(id, progLang) || (typeof TestsExtra !== 'undefined' ? TestsExtra[progLang === 'csharp' ? 'csharp' : 'python'].find(function(t) { return t.id === id; }) : null);
+            if (test && test.desc) {
+                const cz = uiLang === 'cz';
+                const testDesc = test.desc[uiLang] || test.desc.en;
+                const heading = cz ? 'Co bude v testu' : 'What the test expects';
+                contentEl.innerHTML += '<div class="test-preview"><h3>\uD83D\uDCCB ' + heading + '</h3><p>' + testDesc + '</p></div>';
+            }
+        } catch (e) { console.warn('Test preview error:', e); }
+
         // Highlight code blocks
         contentEl.querySelectorAll('pre code').forEach(block => {
             if (window.hljs) hljs.highlightElement(block);

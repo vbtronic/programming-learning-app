@@ -1219,6 +1219,23 @@ body {
     font-size: 0.85em;
 }
 
+.test-preview {
+    background: linear-gradient(135deg, var(--bg-secondary), rgba(var(--primary-rgb, 99,102,241), 0.05));
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin: 24px 0 16px;
+}
+.test-preview h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    color: var(--primary);
+}
+.test-preview p {
+    margin: 4px 0;
+    line-height: 1.6;
+}
+
 .lesson-footer {
     text-align: center;
     margin-top: 36px;
@@ -1772,6 +1789,9 @@ body {
     min-height: 4px;
     border-radius: 3px 3px 0 0;
     transition: height 0.4s ease-out, transform 0.2s;
+    background-image: linear-gradient(to top, rgba(0,0,0,0.15), transparent) !important;
+    background-blend-mode: overlay;
+    box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
 }
 .chart-bar-wrapper:hover .chart-bar {
     transform: scaleX(1.2);

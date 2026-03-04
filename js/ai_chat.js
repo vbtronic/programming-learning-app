@@ -3,7 +3,7 @@
    WebLLM (WebGPU) with keyword-based fallback
    ============================ */
 
-const AIChat = {
+var AIChat = {
     engine: null,
     loading: false,
     ready: false,
