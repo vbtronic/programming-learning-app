@@ -908,7 +908,7 @@ const App = {
             el.innerHTML =
                 '<div class="help-section">' +
                     '<h2>Jak aplikace funguje</h2>' +
-                    '<p>CodeLearn je interaktivní aplikace pro výuku programování. Projdi 50 lekcí, splň testy a sbírej odznaky.</p>' +
+                    '<p>Learn Coding je interaktivní aplikace pro výuku programování. Projdi 50 lekcí, splň testy a sbírej odznaky.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Lekce</h2>' +
@@ -945,7 +945,7 @@ const App = {
             el.innerHTML =
                 '<div class="help-section">' +
                     '<h2>How the App Works</h2>' +
-                    '<p>CodeLearn is an interactive programming learning app. Complete 50 lessons, pass tests, and collect badges.</p>' +
+                    '<p>Learn Coding is an interactive programming learning app. Complete 50 lessons, pass tests, and collect badges.</p>' +
                 '</div>' +
                 '<div class="help-section">' +
                     '<h2>Lessons</h2>' +
@@ -987,7 +987,6 @@ const App = {
         this.showPage('hackathons');
         const profile = Storage.getProfile();
         const uiLang = profile.uiLang || 'en';
-        const progLang = profile.progLang;
         const hackathons = Storage.getHackathons();
 
         // Active hackathon card
@@ -1006,29 +1005,6 @@ const App = {
         } else {
             activeEl.classList.add('hidden');
         }
-
-        // Lesson hackathons (10, 20, 30, 40, 50)
-        const lessonGrid = document.getElementById('lesson-hackathons-grid');
-        lessonGrid.innerHTML = '';
-        [10, 20, 30, 40, 50].forEach(function(lessonId) {
-            const lesson = Lessons.getLesson(lessonId);
-            if (!lesson) return;
-            const title = Lessons.getTitle(lesson, progLang, uiLang);
-            const completed = Storage.isLessonCompleted(lessonId, progLang);
-            const score = Storage.getTestScore(lessonId, progLang);
-            const isLocked = !completed;
-            const card = document.createElement('div');
-            card.className = 'hackathon-card' + (completed ? ' completed' : '') + (isLocked ? ' locked' : '');
-            card.innerHTML =
-                '<span class="hackathon-icon">' + (isLocked ? '&#x1F512;' : '&#x1F680;') + '</span>' +
-                '<h3>' + I18n.t('lesson.lessonN', { n: lessonId }) + ': ' + title + '</h3>' +
-                (isLocked ? '<p class="hackathon-locked-text">' + I18n.t('hackathons.lockedText') + '</p>' : '') +
-                (score > 0 ? '<span class="hackathon-score-badge">' + score + '/100</span>' : '');
-            if (!isLocked) {
-                card.onclick = function() { location.hash = '#lesson/' + lessonId; };
-            }
-            lessonGrid.appendChild(card);
-        });
 
         // History
         const historyEl = document.getElementById('hackathons-history');

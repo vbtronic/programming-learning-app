@@ -175,8 +175,8 @@ const AIChat = {
         // Greeting
         if (/^(hi|hello|hey|ahoj|\u010dau|zdrav\u00edm)/i.test(msg)) {
             return cz
-                ? 'Ahoj! Jsem tv\u016fj AI agent. Spolupracujme na "' + ctx.title + '" \u2014 jak ti m\u016f\u017eu pomoct?'
-                : 'Hi! I\'m your AI agent. Let\'s collaborate on "' + ctx.title + '" \u2014 how can I help?';
+                ? 'Ahoj! Jsem tv\u016fj AI asistent. Spolupracujme na "' + ctx.title + '" \u2014 jak ti m\u016f\u017eu pomoct?'
+                : 'Hi! I\'m your AI assistant. Let\'s collaborate on "' + ctx.title + '" \u2014 how can I help?';
         }
 
         // Code review request
@@ -258,6 +258,63 @@ const AIChat = {
             : 'Good question! The topic "' + ctx.title + '" is important. Review the lesson and try the examples. Tell me more about what you need.';
     },
 
+    // Format AI message HTML - detect code blocks and add insert buttons
+    formatMessageHTML(text) {
+        const codeBlockRegex = /```(?:\w*\n?)([\s\S]*?)```/g;
+        let hasCode = false;
+        let firstCode = null;
+
+        const formatted = text.replace(codeBlockRegex, function(match, code) {
+            hasCode = true;
+            if (!firstCode) firstCode = code.trim();
+            var escaped = code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return '<pre class="ai-code-block"><code>' + escaped + '</code></pre>';
+        });
+
+        if (hasCode && this.editorId) {
+            var cz = I18n.currentLang === 'cz';
+            return formatted +
+                '<div class="ai-code-actions">' +
+                    '<button class="ai-insert-code" onclick="AIChat.insertCodeToEditor(\'replace\')">' +
+                        (cz ? '\u2B07 Nahradit v editoru' : '\u2B07 Replace in editor') +
+                    '</button>' +
+                    '<button class="ai-insert-code" onclick="AIChat.insertCodeToEditor(\'insert\')">' +
+                        (cz ? '\u2B07 Vlo\u017Eit na kurzor' : '\u2B07 Insert at cursor') +
+                    '</button>' +
+                '</div>';
+        }
+
+        // Escape any remaining HTML for non-code text
+        if (!hasCode) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        return formatted;
+    },
+
+    // Insert code from last AI message into editor
+    insertCodeToEditor(mode) {
+        if (!this.editorId || !this.messages.length) return;
+        // Find last AI message with code block
+        for (var i = this.messages.length - 1; i >= 0; i--) {
+            if (this.messages[i].sender === 'ai') {
+                var match = /```(?:\w*\n?)([\s\S]*?)```/.exec(this.messages[i].text);
+                if (match) {
+                    var code = match[1].trim();
+                    if (mode === 'replace') {
+                        CodeEditor.setCode(this.editorId, code);
+                    } else if (mode === 'insert') {
+                        var editor = CodeEditor.get(this.editorId);
+                        if (editor) {
+                            editor.session.insert(editor.getCursorPosition(), code);
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    },
+
     // Add message to chat UI
     addMessage(sender, text, isLoading) {
         const messagesEl = document.getElementById('ai-chat-messages');
@@ -272,6 +329,8 @@ const AIChat = {
         if (isLoading) {
             bubble.classList.add('ai-chat-loading');
             bubble.innerHTML = '<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span>';
+        } else if (sender === 'ai') {
+            bubble.innerHTML = this.formatMessageHTML(text);
         } else {
             bubble.textContent = text;
         }
@@ -286,7 +345,7 @@ const AIChat = {
         const loading = messagesEl.querySelector('.ai-chat-loading');
         if (loading) {
             loading.classList.remove('ai-chat-loading');
-            loading.textContent = text;
+            loading.innerHTML = this.formatMessageHTML(text);
         }
         this.messages.push({ sender: 'ai', text });
     }

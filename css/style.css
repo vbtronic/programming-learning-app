@@ -3,6 +3,17 @@
    Modern Responsive CSS
    ============================ */
 
+/* Prevent text cursor on non-interactive elements */
+h1, h2, h3, h4, h5, h6, p, span, label, li {
+    cursor: default;
+}
+a, button, [onclick] {
+    cursor: pointer;
+}
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], textarea {
+    cursor: text;
+}
+
 /* CSS Custom Properties - Dark Theme (default) */
 :root {
     --bg-primary: #0c0e14;
@@ -1082,7 +1093,6 @@ body {
     border-radius: var(--radius);
     padding: 36px;
     line-height: 1.8;
-    cursor: default;
     box-shadow: var(--shadow-card);
 }
 
@@ -1163,7 +1173,6 @@ body {
     padding: 16px 20px;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     margin: 24px 0;
-    cursor: default;
 }
 
 .lesson-content .tip p {
@@ -1282,6 +1291,39 @@ body {
     white-space: nowrap;
 }
 
+.ai-code-block {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 0.8rem;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.ai-code-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.ai-insert-code {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ai-insert-code:hover {
+    background: var(--accent-hover);
+}
+
 /* ===== TEST SCREEN ===== */
 .test-header {
     display: flex;
@@ -1306,7 +1348,6 @@ body {
     color: var(--text-secondary);
     line-height: 1.7;
     box-shadow: var(--shadow-card);
-    cursor: default;
 }
 
 .test-description code {
@@ -1901,7 +1942,6 @@ body {
     margin-bottom: 24px;
     line-height: 1.7;
     color: var(--text-secondary);
-    cursor: default;
 }
 
 .hackathon-desc ul {
@@ -2041,9 +2081,6 @@ body {
 }
 
 /* ===== HELP PAGE ===== */
-.help-content {
-    cursor: default;
-}
 
 .help-section {
     background: var(--bg-card);

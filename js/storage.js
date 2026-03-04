@@ -74,14 +74,28 @@ const Storage = {
         return this.save('progress', progress);
     },
 
-    // Get badges
+    // Get badges (per programming language)
     getBadges() {
-        return this.load('badges') || { owned: [] };
+        const profile = this.getProfile();
+        const lang = profile.progLang || 'python';
+        var badges = this.load('badges_' + lang);
+        if (!badges) {
+            // Migrate from old global badges key (one-time)
+            var oldBadges = this.load('badges');
+            if (oldBadges && oldBadges.owned && oldBadges.owned.length > 0) {
+                this.save('badges_' + lang, oldBadges);
+                return oldBadges;
+            }
+            return { owned: [] };
+        }
+        return badges;
     },
 
-    // Save badges
+    // Save badges (per programming language)
     saveBadges(badges) {
-        return this.save('badges', badges);
+        const profile = this.getProfile();
+        const lang = profile.progLang || 'python';
+        return this.save('badges_' + lang, badges);
     },
 
     // Add points

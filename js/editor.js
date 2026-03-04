@@ -29,6 +29,7 @@ const CodeEditor = {
             showPrintMargin: false,
             tabSize: 4,
             useSoftTabs: true,
+            behavioursEnabled: true,
             wrap: true,
             minLines: 8,
             maxLines: 25

@@ -9,7 +9,7 @@ const I18n = {
     translations: {
         en: {
             // Nav
-            'nav.title': 'CodeLearn',
+            'nav.title': 'Learn Coding',
             'nav.home': 'Home',
             'nav.lessons': 'Lessons',
             'nav.badges': 'Badges',
@@ -133,7 +133,7 @@ const I18n = {
 
             // AI Chat
             'ai.chatTitle': 'AI Assistant',
-            'ai.placeholder': 'Cooperate with the agent...',
+            'ai.placeholder': 'Cooperate with AI assistant...',
             'ai.send': 'Send',
 
             // Badges
@@ -235,7 +235,7 @@ const I18n = {
 
         cz: {
             // Nav
-            'nav.title': 'CodeLearn',
+            'nav.title': 'Learn Coding',
             'nav.home': 'Domů',
             'nav.lessons': 'Lekce',
             'nav.badges': 'Odznaky',
@@ -358,7 +358,7 @@ const I18n = {
 
             // AI Chat
             'ai.chatTitle': 'AI Asistent',
-            'ai.placeholder': 'Spolupracuj s agentem...',
+            'ai.placeholder': 'Spolupracuj s AI asistentem...',
             'ai.send': 'Odeslat',
 
             // Badges
