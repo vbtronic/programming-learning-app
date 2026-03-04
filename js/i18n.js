@@ -131,10 +131,11 @@ const I18n = {
             'test.backToLessons': 'Back to Lessons',
             'test.emptyCode': 'Write some code before submitting!',
 
-            // AI Chat
-            'ai.chatTitle': 'AI Assistant',
-            'ai.placeholder': 'Chat with AI... (try /search to search the web)',
-            'ai.send': 'Send',
+            // Knowledge Map
+            'km.title': 'Knowledge Map',
+            'km.concepts': 'Key Concepts',
+            'km.tips': 'Tips',
+            'km.example': 'Example',
 
             // Badges
             'badges.title': 'Badge Shop',
@@ -159,7 +160,6 @@ const I18n = {
             'settings.languages': 'Languages',
             'settings.uiLanguage': 'Interface Language',
             'settings.progLanguage': 'Programming Language',
-            'settings.aiAssistant': 'AI Assistant',
             'settings.progress': 'Progress & Stats',
             'dashboard.title': 'Performance Dashboard',
             'settings.myBadges': 'My Badges',
@@ -356,10 +356,11 @@ const I18n = {
             'test.backToLessons': 'Zpět na lekce',
             'test.emptyCode': 'Napiš kód před odesláním!',
 
-            // AI Chat
-            'ai.chatTitle': 'AI Asistent',
-            'ai.placeholder': 'Piš AI... (/search pro hledání na webu)',
-            'ai.send': 'Odeslat',
+            // Knowledge Map
+            'km.title': 'Mapa znalostí',
+            'km.concepts': 'Klíčové pojmy',
+            'km.tips': 'Tipy',
+            'km.example': 'Příklad',
 
             // Badges
             'badges.title': 'Obchod s odznaky',
@@ -384,7 +385,6 @@ const I18n = {
             'settings.languages': 'Jazyky',
             'settings.uiLanguage': 'Jazyk rozhraní',
             'settings.progLanguage': 'Programovací jazyk',
-            'settings.aiAssistant': 'AI Asistent',
             'settings.progress': 'Pokrok a statistiky',
             'dashboard.title': 'Dashboard výkonu',
             'settings.myBadges': 'Moje odznaky',

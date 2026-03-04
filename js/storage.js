@@ -16,8 +16,7 @@ const Storage = {
             uiLang: 'en',        // 'en' or 'cz'
             level: null,          // determined by assessment
             startLesson: 1,
-            assessmentDone: false,
-            aiDisabled: false
+            assessmentDone: false
         },
         progress: {
             currentLesson: 1,

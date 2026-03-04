@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <title>Learn Coding</title>
-    <link rel="stylesheet" href="css/style.css?v=17">
+    <link rel="stylesheet" href="css/style.css?v=18">
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,25 +266,8 @@
             <article class="lesson-content" id="lesson-content">
                 <!-- Filled dynamically -->
             </article>
-            <!-- AI Chat Panel -->
-            <div id="lesson-ai-chat-container">
-                <div class="ai-chat-panel" id="lesson-ai-panel">
-                    <div class="ai-chat-header" onclick="toggleAI('lesson')">
-                        <span class="ai-chat-icon">&#x1F916;</span>
-                        <span data-i18n="ai.chatTitle">AI Assistant</span>
-                        <span class="ai-chat-status" id="lesson-ai-status"></span>
-                        <span class="ai-chat-toggle">&#x25BC;</span>
-                    </div>
-                    <div class="ai-chat-body" style="display:none" id="lesson-ai-body">
-                        <div class="ai-chat-messages" id="lesson-ai-messages"></div>
-                        <div class="ai-chat-input-row">
-                            <input type="text" class="input ai-chat-input" id="lesson-ai-input"
-                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')sendAI('lesson')">
-                            <button class="btn btn-primary ai-chat-send" onclick="sendAI('lesson')">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Knowledge Map -->
+            <div id="lesson-knowledge-map"></div>
 
             <div class="lesson-footer">
                 <button class="btn btn-primary btn-large" id="lesson-go-test" data-i18n="lesson.goToTest">
@@ -328,25 +311,6 @@
                 <div class="test-actions" id="test-actions"></div>
             </div>
 
-            <!-- AI Chat Panel -->
-            <div id="test-ai-chat-container">
-                <div class="ai-chat-panel" id="test-ai-panel">
-                    <div class="ai-chat-header" onclick="toggleAI('test')">
-                        <span class="ai-chat-icon">&#x1F916;</span>
-                        <span data-i18n="ai.chatTitle">AI Assistant</span>
-                        <span class="ai-chat-status" id="test-ai-status"></span>
-                        <span class="ai-chat-toggle">&#x25BC;</span>
-                    </div>
-                    <div class="ai-chat-body" style="display:none" id="test-ai-body">
-                        <div class="ai-chat-messages" id="test-ai-messages"></div>
-                        <div class="ai-chat-input-row">
-                            <input type="text" class="input ai-chat-input" id="test-ai-input"
-                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')sendAI('test')">
-                            <button class="btn btn-primary ai-chat-send" onclick="sendAI('test')">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -421,24 +385,6 @@
                 <div class="hackathon-actions" id="hackathon-actions"></div>
             </div>
 
-            <div id="hackathon-ai-chat-container">
-                <div class="ai-chat-panel" id="hackathon-ai-panel">
-                    <div class="ai-chat-header" onclick="toggleAI('hackathon')">
-                        <span class="ai-chat-icon">&#x1F916;</span>
-                        <span data-i18n="ai.chatTitle">AI Assistant</span>
-                        <span class="ai-chat-status" id="hackathon-ai-status"></span>
-                        <span class="ai-chat-toggle">&#x25BC;</span>
-                    </div>
-                    <div class="ai-chat-body" style="display:none" id="hackathon-ai-body">
-                        <div class="ai-chat-messages" id="hackathon-ai-messages"></div>
-                        <div class="ai-chat-input-row">
-                            <input type="text" class="input ai-chat-input" id="hackathon-ai-input"
-                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')sendAI('hackathon')">
-                            <button class="btn btn-primary ai-chat-send" onclick="sendAI('hackathon')">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -498,13 +444,6 @@
                         <option value="python">Python</option>
                         <option value="csharp">C#</option>
                     </select>
-                </div>
-                <div class="setting-row">
-                    <label data-i18n="settings.aiAssistant">AI Assistant</label>
-                    <label class="toggle">
-                        <input type="checkbox" id="settings-ai-toggle" onchange="App.toggleAI(this.checked)">
-                        <span class="toggle-slider"></span>
-                    </label>
                 </div>
             </div>
 
@@ -583,286 +522,20 @@
         </a>
     </nav>
 
-    <!-- AI chat core - inline to guarantee loading -->
-    <script>
-    var AIChat = {
-        engine: null, loading: false, ready: false,
-        lessonContext: { title: 'Programming', content: '', lang: 'python' },
-        editorId: null, messages: [], activePrefix: null,
-        init: function(title, content, lang, editorId) {
-            this.lessonContext = { title: title, content: content, lang: lang };
-            this.editorId = editorId || null; this.messages = [];
-        },
-        renderPanel: function(containerId) {
-            var prefix = containerId.replace('-ai-chat-container', '');
-            this.activePrefix = prefix;
-            try {
-                var panel = document.getElementById(prefix + '-ai-panel');
-                if (panel) {
-                    var titleEl = panel.querySelector('[data-i18n="ai.chatTitle"]');
-                    if (titleEl && typeof I18n !== 'undefined') titleEl.textContent = I18n.t('ai.chatTitle');
-                    var inputEl = document.getElementById(prefix + '-ai-input');
-                    if (inputEl && typeof I18n !== 'undefined') inputEl.placeholder = I18n.t('ai.placeholder');
-                    var sendBtn = panel.querySelector('.ai-chat-send');
-                    if (sendBtn && typeof I18n !== 'undefined') sendBtn.textContent = I18n.t('ai.send');
-                }
-            } catch (e) {}
-            var messagesEl = document.getElementById(prefix + '-ai-messages');
-            if (messagesEl) messagesEl.innerHTML = '';
-            var bodyEl = document.getElementById(prefix + '-ai-body');
-            if (bodyEl) bodyEl.style.display = 'none';
-            var panel2 = document.getElementById(prefix + '-ai-panel');
-            if (panel2) { var tog = panel2.querySelector('.ai-chat-toggle'); if (tog) tog.innerHTML = '\u25BC'; }
-        },
-        showLoading: function(prefix) {
-            var msgs = document.getElementById(prefix + '-ai-messages');
-            if (!msgs) return;
-            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-            msgs.innerHTML = '<div class="ai-loading-screen">' +
-                '<div class="ai-spinner"></div>' +
-                '<p>' + (cz ? 'Načítání AI modelu...' : 'Loading AI model...') + '</p>' +
-                '<p class="ai-loading-sub" id="' + prefix + '-ai-loading-detail"></p>' +
-                '</div>';
-            // Disable input
-            var inp = document.getElementById(prefix + '-ai-input');
-            if (inp) { inp.disabled = true; inp.placeholder = cz ? 'Čekej na načtení modelu...' : 'Waiting for model to load...'; }
-            var btn = document.getElementById(prefix + '-ai-panel');
-            if (btn) { var b = btn.querySelector('.ai-chat-send'); if (b) b.disabled = true; }
-        },
-        enableInput: function(prefix) {
-            var inp = document.getElementById(prefix + '-ai-input');
-            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-            if (inp) { inp.disabled = false; inp.placeholder = cz ? 'Napiš zprávu...' : 'Type a message...'; inp.focus(); }
-            var panel = document.getElementById(prefix + '-ai-panel');
-            if (panel) { var b = panel.querySelector('.ai-chat-send'); if (b) b.disabled = false; }
-            // Clear loading screen
-            var msgs = document.getElementById(prefix + '-ai-messages');
-            if (msgs) {
-                var ls = msgs.querySelector('.ai-loading-screen');
-                if (ls) ls.remove();
-            }
-        },
-        loadEngine: function() {
-            if (this.ready || this.loading) return;
-            if (!navigator.gpu) {
-                this.updateStatus((typeof I18n !== 'undefined' && I18n.currentLang === 'cz') ? 'WebGPU není podporováno' : 'WebGPU not supported');
-                return;
-            }
-            this.loading = true;
-            var self = this;
-            var prefix = this.activePrefix || 'test';
-            this.showLoading(prefix);
-            this.updateStatus((typeof I18n !== 'undefined' && I18n.currentLang === 'cz') ? 'Načítání AI modelu...' : 'Loading AI model...');
-            import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.81/+esm').then(function(webllm) {
-                return webllm.CreateMLCEngine('Qwen3-1.7B-q4f16_1-MLC', {
-                    initProgressCallback: function(progress) {
-                        if (progress.text) {
-                            self.updateStatus(progress.text);
-                            var detail = document.getElementById(prefix + '-ai-loading-detail');
-                            if (detail) detail.textContent = progress.text;
-                        }
-                    }
-                });
-            }).then(function(engine) {
-                self.engine = engine; self.ready = true; self.loading = false;
-                var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-                self.updateStatus(cz ? 'AI připraveno' : 'AI ready');
-                self.enableInput(prefix);
-            }).catch(function(e) {
-                console.warn('WebLLM failed:', e);
-                self.loading = false; self.ready = false;
-                var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-                self.updateStatus(cz ? 'Chyba načítání AI' : 'AI loading error');
-                // Show error in loading screen
-                var msgs = document.getElementById(prefix + '-ai-messages');
-                if (msgs) {
-                    msgs.innerHTML = '<div class="ai-loading-screen ai-loading-error">' +
-                        '<p>' + (cz ? 'Nepodařilo se načíst AI model.' : 'Failed to load AI model.') + '</p>' +
-                        '<p class="ai-loading-sub">' + e.message + '</p>' +
-                        '<button class="btn btn-primary" onclick="AIChat.loading=false;AIChat.loadEngine()">' +
-                        (cz ? 'Zkusit znovu' : 'Try again') + '</button>' +
-                        '</div>';
-                }
-            });
-        },
-        updateStatus: function(text) {
-            var el = document.getElementById((this.activePrefix || 'test') + '-ai-status');
-            if (el) el.textContent = text;
-        },
-        buildPrompt: function() {
-            var ctx = this.lessonContext;
-            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-            var lang = cz ? 'Czech' : 'English';
-            var p = '';
-            p += '/no_think\n';
-            if (cz) {
-                p += 'Jsi přátelský tutor programování v češtině. Učíš studenta jazyk ' + ctx.lang + '. Téma: "' + ctx.title + '".\n';
-                p += 'PRAVIDLA:\n';
-                p += '1. VŽDY odpovídej ČESKY, nikdy anglicky.\n';
-                p += '2. Piš krátce (2-4 věty). U kódu piš víc.\n';
-                p += '3. Kód vkládej do bloků ```' + ctx.lang + '```.\n';
-                p += '4. Odpovídej POUZE na programování a ' + ctx.lang + '.\n';
-                p += '5. Pokud student ukáže kód, analyzuj ho a poraď.\n';
-                p += '6. NIKDY neodpovídej na témata mimo programování.\n';
-            } else {
-                p += 'You are a programming tutor. You teach ' + ctx.lang + '. Topic: "' + ctx.title + '".\n';
-                p += 'RULES:\n';
-                p += '1. ALWAYS answer in English.\n';
-                p += '2. Be concise (2-4 sentences, more for code).\n';
-                p += '3. Write code in ```' + ctx.lang + '``` blocks.\n';
-                p += '4. ONLY answer programming questions about ' + ctx.lang + '.\n';
-                p += '5. If student shows code, analyze it and give advice.\n';
-                p += '6. NEVER answer off-topic questions.\n';
-            }
-            // User profile
-            try {
-                if (typeof Storage !== 'undefined' && Storage.getProfile) {
-                    var profile = Storage.getProfile();
-                    var progress = Storage.getProgress();
-                    if (profile.name) p += 'Student: ' + profile.name + '. ';
-                    if (profile.level) p += 'Level: ' + profile.level + '. ';
-                    if (profile.description) p += 'About: ' + profile.description.substring(0, 150) + '. ';
-                    var done = progress.completedLessons ? progress.completedLessons.length : 0;
-                    p += 'Progress: lesson ' + progress.currentLesson + '/50, ' + done + ' completed, ' + progress.totalPoints + ' pts. ';
-                    if (profile.level === 'beginner' || profile.level === 1) p += 'Use simple explanations for beginner. ';
-                    else if (profile.level === 'advanced' || profile.level >= 3) p += 'Student is advanced, use technical terms. ';
-                    p += '\n';
-                }
-            } catch(e) {}
-            // Lesson content
-            if (ctx.content) {
-                var plain = ctx.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-                if (plain.length > 500) plain = plain.substring(0, 500) + '...';
-                p += 'Lesson content: ' + plain + '\n';
-            }
-            // Current code from editor
-            try {
-                if (this.editorId && typeof CodeEditor !== 'undefined') {
-                    var code = CodeEditor.getCode(this.editorId);
-                    if (code && code.trim().length > 0) {
-                        p += 'Student current code:\n```\n' + code.substring(0, 400) + '\n```\n';
-                    }
-                }
-            } catch(e) {}
-            return p;
-        },
-        sendMessage: function(userMsg) {
-            if (!userMsg || !userMsg.trim()) return Promise.resolve();
-            if (!this.ready || !this.engine) {
-                var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-                this.addMessage('ai', cz ? 'AI model se ještě načítá, počkej prosím...' : 'AI model is still loading, please wait...');
-                return Promise.resolve();
-            }
-            var self = this;
-            this.addMessage('user', userMsg);
-            var input = document.getElementById((this.activePrefix || 'test') + '-ai-input');
-            if (input) input.value = '';
-            this.addMessage('ai', '...', true);
-            var prompt = this.buildPrompt();
-            var msgs = [{ role: 'system', content: prompt }];
-            this.messages.filter(function(m) { return m.sender; }).slice(-6).forEach(function(m) {
-                msgs.push({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text });
-            });
-            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-            return this.engine.chat.completions.create({ messages: msgs, max_tokens: 512, temperature: 0.7 })
-                .then(function(response) {
-                    var text = response.choices[0].message.content || '';
-                    // Strip Qwen3 thinking tags if present
-                    text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-                    if (!text) text = cz ? '(prázdná odpověď)' : '(empty response)';
-                    self.replaceLastMessage(text);
-                })
-                .catch(function(e) {
-                    console.warn('WebLLM error:', e);
-                    self.replaceLastMessage(cz ? 'Chyba AI: ' + e.message : 'AI Error: ' + e.message);
-                });
-        },
-        formatMessageHTML: function(text) {
-            var codeBlockRegex = /```(?:\w*\n?)([\s\S]*?)```/g;
-            var hasCode = false;
-            var formatted = text.replace(codeBlockRegex, function(match, code) {
-                hasCode = true;
-                var escaped = code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return '<pre class="ai-code-block"><code>' + escaped + '</code></pre>';
-            });
-            if (!hasCode) return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return formatted;
-        },
-        addMessage: function(sender, text, isLoading) {
-            var messagesEl = document.getElementById((this.activePrefix || 'test') + '-ai-messages');
-            if (!messagesEl) return;
-            if (!isLoading) this.messages.push({ sender: sender, text: text });
-            var bubble = document.createElement('div');
-            bubble.className = 'ai-chat-bubble ai-chat-' + sender;
-            if (isLoading) { bubble.classList.add('ai-chat-loading'); bubble.innerHTML = '<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span>'; }
-            else if (sender === 'ai') { bubble.innerHTML = this.formatMessageHTML(text); }
-            else { bubble.textContent = text; }
-            messagesEl.appendChild(bubble);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        },
-        replaceLastMessage: function(text) {
-            var messagesEl = document.getElementById((this.activePrefix || 'test') + '-ai-messages');
-            if (!messagesEl) return;
-            var loading = messagesEl.querySelector('.ai-chat-loading');
-            if (loading) { loading.classList.remove('ai-chat-loading'); loading.innerHTML = this.formatMessageHTML(text); }
-            this.messages.push({ sender: 'ai', text: text });
-        }
-    };
-
-    function toggleAI(prefix) {
-        var body = document.getElementById(prefix + '-ai-body');
-        if (!body) return;
-        if (body.style.display === 'flex') {
-            body.style.display = 'none';
-            var t = body.parentElement.querySelector('.ai-chat-toggle');
-            if (t) t.textContent = '\u25BC';
-        } else {
-            body.style.display = 'flex';
-            body.classList.remove('hidden');
-            var t = body.parentElement.querySelector('.ai-chat-toggle');
-            if (t) t.textContent = '\u25B2';
-            AIChat.activePrefix = prefix;
-            AIChat.loadEngine();
-            var inp = document.getElementById(prefix + '-ai-input');
-            if (inp && AIChat.ready) inp.focus();
-        }
-    }
-    function sendAI(prefix) {
-        try {
-            var inp = document.getElementById(prefix + '-ai-input');
-            if (!inp || inp.disabled) return;
-            var msg = inp.value.trim();
-            if (!msg) return;
-            AIChat.activePrefix = prefix;
-            AIChat.sendMessage(msg).catch(function(e) {
-                console.error('[AI]', e);
-                var msgs = document.getElementById(prefix + '-ai-messages');
-                if (msgs) {
-                    var eb = document.createElement('div');
-                    eb.className = 'ai-chat-bubble ai-chat-ai';
-                    eb.textContent = 'Error: ' + e.message;
-                    msgs.appendChild(eb);
-                }
-            });
-        } catch (e) {
-            console.error('[sendAI]', e);
-        }
-    }
-    </script>
 
     <!-- Scripts (order matters) -->
-    <script src="js/storage.js?v=17"></script>
-    <script src="js/i18n.js?v=17"></script>
-    <script src="js/badges.js?v=17"></script>
-    <script src="js/lessons.js?v=17"></script>
-    <script src="js/lessons_21_30.js?v=17"></script>
-    <script src="js/lessons_31_40.js?v=17"></script>
-    <script src="js/lessons_41_50.js?v=17"></script>
-    <script src="js/tests.js?v=17"></script>
-    <script src="js/tests_extra.js?v=17"></script>
-    <script src="js/editor.js?v=17"></script>
-    <script src="js/ai_chat.js?v=17"></script>
-    <script src="js/hackathons.js?v=17"></script>
-    <script src="js/app.js?v=17"></script>
+    <script src="js/storage.js?v=18"></script>
+    <script src="js/i18n.js?v=18"></script>
+    <script src="js/badges.js?v=18"></script>
+    <script src="js/lessons.js?v=18"></script>
+    <script src="js/lessons_21_30.js?v=18"></script>
+    <script src="js/lessons_31_40.js?v=18"></script>
+    <script src="js/lessons_41_50.js?v=18"></script>
+    <script src="js/tests.js?v=18"></script>
+    <script src="js/tests_extra.js?v=18"></script>
+    <script src="js/editor.js?v=18"></script>
+    <script src="js/knowledge_map.js?v=18"></script>
+    <script src="js/hackathons.js?v=18"></script>
+    <script src="js/app.js?v=18"></script>
 </body>
 </html>

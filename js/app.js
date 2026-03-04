@@ -566,10 +566,9 @@ const App = {
             location.hash = '#test/' + id;
         };
 
-        // Initialize AI chat with full lesson context
+        // Render knowledge map for this lesson
         const title = lesson.title[progLang][uiLang] || lesson.title[progLang].en;
-        AIChat.init(title, content, progLang, null);
-        AIChat.renderPanel('lesson-ai-chat-container');
+        if (typeof KnowledgeMap !== 'undefined') KnowledgeMap.render('lesson-knowledge-map', id, progLang, uiLang);
     },
 
     // Show hackathon-type lesson as free coding (no tips, no topic)
@@ -626,46 +625,8 @@ const App = {
         var backBtn = document.querySelector('#page-hackathon .btn-back');
         if (backBtn) backBtn.href = '#lessons';
 
-        // AI Chat
-        AIChat.init(title, '', progLang, 'hackathon-editor');
-        AIChat.renderPanel('hackathon-ai-chat-container');
     },
 
-    // Toggle AI chat panel
-    toggleAIChat(prefix) {
-        if (!prefix) prefix = AIChat.activePrefix || 'test';
-        AIChat.activePrefix = prefix;
-        var body = document.getElementById(prefix + '-ai-body');
-        if (!body) {
-            console.error('[AI] body not found:', prefix + '-ai-body');
-            return;
-        }
-        var toggle = body.parentElement.querySelector('.ai-chat-toggle');
-
-        if (body.style.display === 'flex') {
-            // Hide
-            body.style.display = 'none';
-            if (toggle) toggle.innerHTML = '&#x25BC;';
-        } else {
-            // Show
-            body.style.display = 'flex';
-            body.classList.remove('hidden');
-            if (toggle) toggle.innerHTML = '&#x25B2;';
-            AIChat.loadEngine();
-            var inputEl = document.getElementById(prefix + '-ai-input');
-            if (inputEl) inputEl.focus();
-        }
-    },
-
-    // Send AI chat message
-    async sendAIMessage(prefix) {
-        if (!prefix) prefix = AIChat.activePrefix || 'test';
-        const input = document.getElementById(prefix + '-ai-input');
-        if (!input) return;
-        const msg = input.value.trim();
-        if (!msg) return;
-        await AIChat.sendMessage(msg);
-    },
 
     // ==================== TESTS ====================
 
@@ -695,9 +656,6 @@ const App = {
         document.getElementById('test-results').classList.add('hidden');
         document.querySelector('#page-test .editor-controls').classList.remove('hidden');
 
-        // Initialize AI chat with full test context (can see user's code)
-        AIChat.init(title, desc, progLang, 'test-editor');
-        AIChat.renderPanel('test-ai-chat-container');
     },
 
     // Run test code
@@ -1211,9 +1169,6 @@ const App = {
             controls.classList.remove('hidden');
         }
 
-        // AI Chat
-        AIChat.init(title, 'Free coding hackathon', progLang, 'hackathon-editor');
-        AIChat.renderPanel('hackathon-ai-chat-container');
     },
 
     async runHackathonCode() {
@@ -1330,7 +1285,6 @@ const App = {
         // Language selects
         document.getElementById('settings-ui-lang').value = profile.uiLang || 'en';
         document.getElementById('settings-prog-lang').value = profile.progLang || 'python';
-        document.getElementById('settings-ai-toggle').checked = !profile.aiDisabled;
 
         // Stats (include hackathon scores)
         const completedCount = progress.completedLessons.length;
@@ -1487,12 +1441,6 @@ const App = {
         Storage.saveProfile(profile);
     },
 
-    toggleAI(enabled) {
-        const profile = Storage.getProfile();
-        profile.aiDisabled = !enabled;
-        Storage.saveProfile(profile);
-        this.route(); // Re-render current page to show/hide AI panel
-    },
 
     fullReset() {
         const msg = I18n.currentLang === 'cz'

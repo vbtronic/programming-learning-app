@@ -9,7 +9,7 @@ Interactive web application for learning Python and C# programming. From complet
 - **Initial Assessment** - Determine your skill level with coding challenges
 - **50 Progressive Lessons** - Text-based lessons with code examples in Python and C#
 - **50 Interactive Tests** - Code editor with run button, automatic scoring (0-100)
-- **AI Chat Assistant** - Ask questions about each lesson (WebLLM + fallback)
+- **Knowledge Map** - Expandable topic map with key concepts, tips, and code examples per lesson
 - **Input Support** - Programs using input()/Console.ReadLine() get interactive input fields
 - **Badge Shop** - Earn points from tests, collect 50+ badges
 - **Performance Dashboard** - Track your progress with charts and analysis
