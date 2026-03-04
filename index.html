@@ -654,7 +654,7 @@
             this.showLoading(prefix);
             this.updateStatus((typeof I18n !== 'undefined' && I18n.currentLang === 'cz') ? 'Načítání AI modelu...' : 'Loading AI model...');
             import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.81/+esm').then(function(webllm) {
-                return webllm.CreateMLCEngine('Qwen2.5-1.5B-Instruct-q4f16_1-MLC', {
+                return webllm.CreateMLCEngine('gemma-2-2b-it-q4f16_1-MLC', {
                     initProgressCallback: function(progress) {
                         if (progress.text) {
                             self.updateStatus(progress.text);
@@ -689,6 +689,44 @@
             var el = document.getElementById((this.activePrefix || 'test') + '-ai-status');
             if (el) el.textContent = text;
         },
+        buildPrompt: function() {
+            var ctx = this.lessonContext;
+            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
+            var lang = cz ? 'Czech' : 'English';
+            var p = 'You are a friendly programming tutor. Language: ' + ctx.lang + '. Topic: "' + ctx.title + '". ALWAYS answer in ' + lang + '.\n';
+            p += 'Rules: Be helpful and conversational. When writing code, use triple backtick blocks (```' + ctx.lang + '). Keep answers concise but complete.\n';
+            // User profile
+            try {
+                if (typeof Storage !== 'undefined' && Storage.getProfile) {
+                    var profile = Storage.getProfile();
+                    var progress = Storage.getProgress();
+                    if (profile.name) p += 'Student: ' + profile.name + '. ';
+                    if (profile.level) p += 'Level: ' + profile.level + '. ';
+                    if (profile.description) p += 'About: ' + profile.description.substring(0, 150) + '. ';
+                    var done = progress.completedLessons ? progress.completedLessons.length : 0;
+                    p += 'Progress: lesson ' + progress.currentLesson + '/50, ' + done + ' completed, ' + progress.totalPoints + ' pts. ';
+                    if (profile.level === 'beginner' || profile.level === 1) p += 'Use simple explanations for beginner. ';
+                    else if (profile.level === 'advanced' || profile.level >= 3) p += 'Student is advanced, use technical terms. ';
+                    p += '\n';
+                }
+            } catch(e) {}
+            // Lesson content
+            if (ctx.content) {
+                var plain = ctx.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                if (plain.length > 500) plain = plain.substring(0, 500) + '...';
+                p += 'Lesson content: ' + plain + '\n';
+            }
+            // Current code from editor
+            try {
+                if (this.editorId && typeof CodeEditor !== 'undefined') {
+                    var code = CodeEditor.getCode(this.editorId);
+                    if (code && code.trim().length > 0) {
+                        p += 'Student current code:\n```\n' + code.substring(0, 400) + '\n```\n';
+                    }
+                }
+            } catch(e) {}
+            return p;
+        },
         sendMessage: function(userMsg) {
             if (!userMsg || !userMsg.trim()) return Promise.resolve();
             if (!this.ready || !this.engine) {
@@ -701,19 +739,12 @@
             var input = document.getElementById((this.activePrefix || 'test') + '-ai-input');
             if (input) input.value = '';
             this.addMessage('ai', '...', true);
-            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
-            var ctx = this.lessonContext;
-            var lang = cz ? 'Czech' : 'English';
-            var prompt = 'You are a friendly programming tutor helping a student learn ' + ctx.lang + '. Current topic: "' + ctx.title + '". Answer in ' + lang + '. Keep responses short (2-3 sentences for chat, more for code). When writing code, use triple backtick code blocks.';
-            if (ctx.content) {
-                var plain = ctx.content.replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim();
-                if (plain.length > 600) plain = plain.substring(0, 600) + '...';
-                prompt += '\\nLesson content: ' + plain;
-            }
+            var prompt = this.buildPrompt();
             var msgs = [{ role: 'system', content: prompt }];
             this.messages.filter(function(m) { return m.sender; }).slice(-6).forEach(function(m) {
                 msgs.push({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text });
             });
+            var cz = (typeof I18n !== 'undefined' && I18n.currentLang === 'cz');
             return this.engine.chat.completions.create({ messages: msgs, max_tokens: 512, temperature: 0.7 })
                 .then(function(response) { self.replaceLastMessage(response.choices[0].message.content); })
                 .catch(function(e) {
