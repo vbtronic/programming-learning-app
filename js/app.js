@@ -621,8 +621,9 @@ const App = {
     },
 
     // Toggle AI chat panel
-    toggleAIChat() {
-        var prefix = AIChat.activePrefix || 'test';
+    toggleAIChat(prefix) {
+        if (!prefix) prefix = AIChat.activePrefix || 'test';
+        AIChat.activePrefix = prefix;
         const body = document.getElementById(prefix + '-ai-body');
         const toggle = body ? body.parentElement.querySelector('.ai-chat-toggle') : null;
         if (!body) return;
@@ -640,8 +641,8 @@ const App = {
     },
 
     // Send AI chat message
-    async sendAIMessage() {
-        var prefix = AIChat.activePrefix || 'test';
+    async sendAIMessage(prefix) {
+        if (!prefix) prefix = AIChat.activePrefix || 'test';
         const input = document.getElementById(prefix + '-ai-input');
         if (!input) return;
         const msg = input.value.trim();

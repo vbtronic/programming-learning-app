@@ -267,7 +267,7 @@
             <!-- AI Chat Panel -->
             <div id="lesson-ai-chat-container">
                 <div class="ai-chat-panel" id="lesson-ai-panel">
-                    <div class="ai-chat-header" onclick="App.toggleAIChat()">
+                    <div class="ai-chat-header" onclick="App.toggleAIChat('lesson')">
                         <span class="ai-chat-icon">&#x1F916;</span>
                         <span data-i18n="ai.chatTitle">AI Assistant</span>
                         <span class="ai-chat-status" id="lesson-ai-status"></span>
@@ -277,8 +277,8 @@
                         <div class="ai-chat-messages" id="lesson-ai-messages"></div>
                         <div class="ai-chat-input-row">
                             <input type="text" class="input ai-chat-input" id="lesson-ai-input"
-                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')App.sendAIMessage()">
-                            <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()">Send</button>
+                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')App.sendAIMessage('lesson')">
+                            <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage('lesson')">Send</button>
                         </div>
                     </div>
                 </div>
@@ -329,7 +329,7 @@
             <!-- AI Chat Panel -->
             <div id="test-ai-chat-container">
                 <div class="ai-chat-panel" id="test-ai-panel">
-                    <div class="ai-chat-header" onclick="App.toggleAIChat()">
+                    <div class="ai-chat-header" onclick="App.toggleAIChat('test')">
                         <span class="ai-chat-icon">&#x1F916;</span>
                         <span data-i18n="ai.chatTitle">AI Assistant</span>
                         <span class="ai-chat-status" id="test-ai-status"></span>
@@ -339,8 +339,8 @@
                         <div class="ai-chat-messages" id="test-ai-messages"></div>
                         <div class="ai-chat-input-row">
                             <input type="text" class="input ai-chat-input" id="test-ai-input"
-                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')App.sendAIMessage()">
-                            <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()">Send</button>
+                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')App.sendAIMessage('test')">
+                            <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage('test')">Send</button>
                         </div>
                     </div>
                 </div>
@@ -421,7 +421,7 @@
 
             <div id="hackathon-ai-chat-container">
                 <div class="ai-chat-panel" id="hackathon-ai-panel">
-                    <div class="ai-chat-header" onclick="App.toggleAIChat()">
+                    <div class="ai-chat-header" onclick="App.toggleAIChat('hackathon')">
                         <span class="ai-chat-icon">&#x1F916;</span>
                         <span data-i18n="ai.chatTitle">AI Assistant</span>
                         <span class="ai-chat-status" id="hackathon-ai-status"></span>
@@ -431,8 +431,8 @@
                         <div class="ai-chat-messages" id="hackathon-ai-messages"></div>
                         <div class="ai-chat-input-row">
                             <input type="text" class="input ai-chat-input" id="hackathon-ai-input"
-                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')App.sendAIMessage()">
-                            <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage()">Send</button>
+                                placeholder="Chat with AI..." onkeydown="if(event.key==='Enter')App.sendAIMessage('hackathon')">
+                            <button class="btn btn-primary ai-chat-send" onclick="App.sendAIMessage('hackathon')">Send</button>
                         </div>
                     </div>
                 </div>
@@ -582,18 +582,18 @@
     </nav>
 
     <!-- Scripts (order matters) -->
-    <script src="js/storage.js?v=6"></script>
-    <script src="js/i18n.js?v=6"></script>
-    <script src="js/badges.js?v=6"></script>
-    <script src="js/lessons.js?v=6"></script>
-    <script src="js/lessons_21_30.js?v=6"></script>
-    <script src="js/lessons_31_40.js?v=6"></script>
-    <script src="js/lessons_41_50.js?v=6"></script>
-    <script src="js/tests.js?v=6"></script>
-    <script src="js/tests_extra.js?v=6"></script>
-    <script src="js/editor.js?v=6"></script>
-    <script src="js/ai_chat.js?v=6"></script>
-    <script src="js/hackathons.js?v=6"></script>
-    <script src="js/app.js?v=6"></script>
+    <script src="js/storage.js?v=7"></script>
+    <script src="js/i18n.js?v=7"></script>
+    <script src="js/badges.js?v=7"></script>
+    <script src="js/lessons.js?v=7"></script>
+    <script src="js/lessons_21_30.js?v=7"></script>
+    <script src="js/lessons_31_40.js?v=7"></script>
+    <script src="js/lessons_41_50.js?v=7"></script>
+    <script src="js/tests.js?v=7"></script>
+    <script src="js/tests_extra.js?v=7"></script>
+    <script src="js/editor.js?v=7"></script>
+    <script src="js/ai_chat.js?v=7"></script>
+    <script src="js/hackathons.js?v=7"></script>
+    <script src="js/app.js?v=7"></script>
 </body>
 </html>
